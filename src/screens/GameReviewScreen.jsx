@@ -15,7 +15,7 @@ export default function GameReviewScreen({ game, onDelete, onBack, onNavigate, c
   const G = game;
   const T = G.teams;
   const d = new Date(G.date);
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'commentator_admin';
+  const isAdmin = currentUser?.role === 'admin';
   const hasRecording = (events.length > 0 || (G.duration && G.duration > 0));
   const matchId = G.supabase_id || G.id;
 

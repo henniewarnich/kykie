@@ -22,7 +22,6 @@ const timeAgo = (ts) => {
 
 const ROLES = [
   { id: 'admin', label: 'Admin', color: '#EF4444' },
-  { id: 'commentator_admin', label: 'Comm Admin', color: '#F59E0B' },
   { id: 'commentator', label: 'Commentator', color: '#10B981' },
   { id: 'coach', label: 'Coach', color: '#8B5CF6' },
 ];
@@ -34,6 +33,7 @@ export default function UserManagementScreen({ currentUser, onBack }) {
   const [editUser, setEditUser] = useState(null);
   const [search, setSearch] = useState("");
   const [allTeams, setAllTeams] = useState([]);
+  const [allInstitutions, setAllInstitutions] = useState([]);
   const [coachTeamsMap, setCoachTeamsMap] = useState({}); // { coachId: [team, ...] }
   const [editCoachTeams, setEditCoachTeams] = useState([]); // team IDs for edit view
   const [editRoles, setEditRoles] = useState([]);
@@ -54,14 +54,17 @@ export default function UserManagementScreen({ currentUser, onBack }) {
 
   // Which roles can this user manage?
   const isAdmin = currentUser?.role === 'admin';
-  const isCommAdmin = currentUser?.role === 'commentator_admin';
   const manageableRoles = isAdmin ? ROLES : ROLES.filter(r => r.id === 'commentator');
 
   useEffect(() => { loadUsers(); loadTeams(); }, []);
 
   const loadTeams = async () => {
-    const { data } = await supabase.from('teams').select(TEAM_SELECT).order('name');
-    setAllTeams(data || []);
+    const [{ data: t }, { data: insts }] = await Promise.all([
+      supabase.from('teams').select(TEAM_SELECT).order('name'),
+      supabase.from('institutions').select('id, name, short_name').order('name'),
+    ]);
+    setAllTeams(t || []);
+    setAllInstitutions(insts || []);
   };
 
   const loadCoachTeams = async () => {
@@ -77,7 +80,7 @@ export default function UserManagementScreen({ currentUser, onBack }) {
   const loadUsers = async () => {
     setLoading(true);
     const data = await listUsers();
-    // CommAdmin only sees commentators
+    // Non-admins only see commentators
     setUsers(isAdmin ? data : data.filter(u => u.role === 'commentator'));
     setLoading(false);
     // Also refresh coach team assignments
@@ -128,6 +131,7 @@ export default function UserManagementScreen({ currentUser, onBack }) {
       lastname: editUser.lastname,
       role: editUser.role,
       roles: editRoles,
+      mobile_number: editUser.mobile_number?.trim() || null,
       commentator_status: editUser.commentator_status || null,
       coach_status: editUser.coach_status || null,
     });
@@ -280,6 +284,50 @@ export default function UserManagementScreen({ currentUser, onBack }) {
           <div style={{ fontSize: 13, color: "#F59E0B", padding: "10px 0" }}>{editUser.username}</div>
           <div style={{ fontSize: 9, color: theme.textDim }}>Username cannot be changed</div>
         </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: theme.textDim, marginBottom: 4 }}>Mobile Number</div>
+          <input style={S.input} type="tel" value={editUser.mobile_number || ''}
+            onChange={e => setEditUser(p => ({ ...p, mobile_number: e.target.value }))}
+            placeholder="e.g. 082 123 4567" />
+        </div>
+
+        {/* Profile details — read-only summary of registration data */}
+        {(() => {
+          const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+          const instLookup = id => allInstitutions.find(i => i.id === id);
+          const supportingNames = (editUser.supporting_institution_ids || [])
+            .map(id => instLookup(id))
+            .filter(Boolean)
+            .map(i => i.short_name || i.name);
+          const sportLabel = (editUser.sport_interest || []).join(', ') || '—';
+          const notifBits = [];
+          if (editUser.notify_live) notifBits.push('Live');
+          if (editUser.notify_rewards) notifBits.push('Rewards');
+          if (editUser.notify_general) notifBits.push('General');
+          const Row = ({ label, value }) => (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '5px 0', borderBottom: `1px solid ${theme.border}` }}>
+              <div style={{ fontSize: 10, color: theme.textDim, flex: '0 0 110px' }}>{label}</div>
+              <div style={{ fontSize: 11, color: theme.text, flex: 1, wordBreak: 'break-word' }}>{value || '—'}</div>
+            </div>
+          );
+          return (
+            <div style={{ marginBottom: 16, background: theme.surface, borderRadius: 10, padding: '4px 12px', border: `1px solid ${theme.border}` }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: '#475569', letterSpacing: 1.5, padding: '8px 0 4px', textTransform: 'uppercase' }}>Profile details</div>
+              <Row label="Email" value={editUser.email} />
+              <Row label="Date of birth" value={editUser.date_of_birth ? fmtDate(editUser.date_of_birth) : null} />
+              <Row label="Gender" value={editUser.biological_gender ? editUser.biological_gender.charAt(0).toUpperCase() + editUser.biological_gender.slice(1) : null} />
+              <Row label="Home town" value={editUser.home_town} />
+              <Row label="Sport interest" value={sportLabel === '—' ? null : sportLabel} />
+              <Row label="Supporting" value={supportingNames.length > 0 ? supportingNames.join(', ') : null} />
+              <Row label="Notifications" value={notifBits.length > 0 ? notifBits.join(' · ') : 'None'} />
+              <Row label="Terms accepted" value={editUser.accepted_terms_at ? fmtDate(editUser.accepted_terms_at) : null} />
+              <Row label="Last seen" value={editUser.last_seen_at ? fmtDate(editUser.last_seen_at) : null} />
+              <Row label="Joined" value={editUser.created_at ? fmtDate(editUser.created_at) : null} />
+            </div>
+          );
+        })()}
+
         {isAdmin && (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, color: theme.textDim, marginBottom: 4 }}>Roles <span style={{ fontSize: 9, color: "#475569" }}>(tap to toggle, first = primary)</span></div>
@@ -311,7 +359,7 @@ export default function UserManagementScreen({ currentUser, onBack }) {
         )}
 
         {/* Commentator status override */}
-        {isAdmin && editRoles.some(r => ['commentator', 'commentator_admin'].includes(r)) && (
+        {isAdmin && editRoles.includes('commentator') && (
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, color: theme.textDim, marginBottom: 4 }}>Commentator Status</div>
             <div style={{ display: "flex", gap: 6 }}>
@@ -536,7 +584,7 @@ export default function UserManagementScreen({ currentUser, onBack }) {
                       background: roleColor(r) + "22", color: roleColor(r),
                     }}>{roleLabel(r)}</span>
                   ))}
-                  {u.commentator_status && (u.roles?.some(r => ['commentator', 'commentator_admin'].includes(r)) || ['commentator', 'commentator_admin'].includes(u.role)) && (
+                  {u.commentator_status && (u.roles?.includes('commentator') || u.role === 'commentator') && (
                     <span style={{
                       fontSize: 8, fontWeight: 700, padding: "2px 5px", borderRadius: 99,
                       background: u.commentator_status === 'qualified' ? '#10B98122' : u.commentator_status === 'apprentice' ? '#F59E0B22' : '#64748B22',

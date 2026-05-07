@@ -25,7 +25,7 @@ export default function AdminDashboardPanel({ onNavigate, currentUser }) {
     ["what_if", "🔮", "What-If Match", "Pick two teams — see prediction"],
     ["teams", "🏫", "Institutions & Teams", `${teamCount} team${teamCount !== 1 ? "s" : ""}`],
     ["history", "📊", "Game History", "View all recorded matches"],
-    ...(currentUser?.role === 'admin' || currentUser?.role === 'commentator_admin' ? [
+    ...(currentUser?.role === 'admin' ? [
       ["users", "🔑", "Users", "Manage user accounts"],
       ["rankings", "🏆", "Rankings", "Manage team rankings"],
       ["pending", "📋", "Pending Approvals", pendingCount > 0 ? `${pendingCount} awaiting review` : "No pending items"],

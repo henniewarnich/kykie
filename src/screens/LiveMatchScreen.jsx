@@ -563,7 +563,7 @@ export default function LiveMatchScreen({ matchConfig, existingMatchId, onSaveGa
       />
 
       {/* Speed control — admin only, video review or demo */}
-      {(isVideoReview || isDemo) && currentUser && ['admin', 'commentator_admin'].includes(currentUser.role) && (
+      {(isVideoReview || isDemo) && currentUser && currentUser.role === 'admin' && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 4, padding: '4px 0' }}>
           {[1, 1.5, 2].map(s => (
             <button key={s} onClick={() => timer.setSpeed(s)} style={{

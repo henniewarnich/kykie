@@ -43,6 +43,7 @@ export default function RegisterPage() {
   const [dobYear, setDobYear] = useState('');
   const [gender, setGender] = useState('');
   const [hometown, setHometown] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [sportInterest, setSportInterest] = useState([]);
   const [supportingInsts, setSupportingInsts] = useState([]); // UUID[] max 4
 
@@ -117,6 +118,7 @@ export default function RegisterPage() {
       date_of_birth: dobYear && dobMonth && dobDay ? `${dobYear}-${dobMonth.padStart(2,'0')}-${dobDay.padStart(2,'0')}` : null,
       biological_gender: gender || null,
       home_town: hometown || null,
+      mobile_number: mobileNumber || null,
       sport_interest: regRole === 'supporter' ? sportInterest : [selectedSport],
       supporting_institution_ids: supportingInsts,
       teamIds: regRole === 'coach' ? coachTeamIds : [],
@@ -465,6 +467,12 @@ export default function RegisterPage() {
                 <div style={labelStyle}>Home Town</div>
                 <input value={hometown} onChange={e => setHometown(e.target.value)}
                   placeholder="e.g. Paarl" style={inputStyle()} />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <div style={labelStyle}>Mobile Number <span style={{ color: '#475569', fontWeight: 400 }}>(optional)</span></div>
+                <input type="tel" value={mobileNumber} onChange={e => setMobileNumber(e.target.value)}
+                  placeholder="e.g. 082 123 4567" style={inputStyle()} />
               </div>
 
               {/* Sport interests (supporters only — commentator/coach select sport above) */}

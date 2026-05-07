@@ -84,7 +84,7 @@ export async function getProfileByUsername(username) {
   return profile;
 }
 
-// Create a new user (admin/commentator_admin function)
+// Create a new user (admin only)
 export async function createUser({ firstname, lastname, username, email, password, role, roles }) {
   // Pre-check: username uniqueness
   const { data: existing } = await supabase.from('profiles').select('id').eq('username', username.toLowerCase().trim()).maybeSingle();
@@ -179,7 +179,7 @@ export async function resetPassword(userId, newPassword) {
 }
 
 // Self-register (public registration)
-export async function registerUser({ email, password, firstname, lastname, username, role = 'supporter', alias_nickname, date_of_birth, biological_gender, home_town, sport_interest, supporting_institution_ids, teamIds, notify_live, notify_rewards, notify_general, accepted_terms_at }) {
+export async function registerUser({ email, password, firstname, lastname, username, role = 'supporter', alias_nickname, date_of_birth, biological_gender, home_town, mobile_number, sport_interest, supporting_institution_ids, teamIds, notify_live, notify_rewards, notify_general, accepted_terms_at }) {
   // Pre-check: username uniqueness
   const { data: existing } = await supabase.from('profiles').select('id').eq('username', username.toLowerCase().trim()).maybeSingle();
   if (existing) return { error: `Username "${username}" is already taken.` };
@@ -212,6 +212,7 @@ export async function registerUser({ email, password, firstname, lastname, usern
     p_notify_rewards: notify_rewards !== false,
     p_notify_general: notify_general !== false,
     p_accepted_terms_at: accepted_terms_at || null,
+    p_mobile_number: mobile_number?.trim() || null,
   });
 
   if (profileErr) return { error: `Account created but profile failed: ${profileErr.message}` };

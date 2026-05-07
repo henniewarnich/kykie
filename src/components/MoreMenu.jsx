@@ -23,14 +23,14 @@ const SectionLabel = ({ children }) => (
 );
 
 export default function MoreMenu({ currentUser, onLogout }) {
-  const isComm = currentUser && ['admin', 'commentator_admin', 'commentator'].includes(currentUser.role);
-  const isAdmin = currentUser && ['admin', 'commentator_admin'].includes(currentUser.role);
+  const isComm = currentUser && ['admin', 'commentator'].includes(currentUser.role);
+  const isAdmin = currentUser && ['admin'].includes(currentUser.role);
   const isCoach = currentUser?.role === 'coach';
 
   return (
     <div style={{ padding: '16px 16px 20px' }}>
 
-      {/* ── ADMIN / COMM ADMIN ── */}
+      {/* ── ADMIN ── */}
       {isAdmin && (
         <>
           <SectionLabel>Manage</SectionLabel>

@@ -70,7 +70,7 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
     if (!scoreEntryMatch || !currentUser) return;
     setSeSubmitting(true);
     const m = scoreEntryMatch;
-    const isAdmin = ['admin', 'commentator_admin', 'commentator'].includes(currentUser.role);
+    const isAdmin = ['admin', 'commentator'].includes(currentUser.role);
     const penFields = seHomeScore === seAwayScore && seHomePen != null && seAwayPen != null
       ? { home_penalty_score: seHomePen, away_penalty_score: seAwayPen }
       : { home_penalty_score: null, away_penalty_score: null };
@@ -559,7 +559,7 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
                   const isPending = m.status === 'pending';
                   const homeSlug = teamSlug(m.home_team);
                   const d = parseSASTDate(m.match_date);
-                  const isAdmin = currentUser && ['admin', 'commentator_admin', 'commentator'].includes(currentUser.role);
+                  const isAdmin = currentUser && ['admin', 'commentator'].includes(currentUser.role);
 
                   // Determine awaiting state for upcoming matches
                   const kickoff = m.scheduled_time ? parseSAST(m.match_date, m.scheduled_time).getTime() : 0;
@@ -1140,7 +1140,7 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
               background: "#10B981", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer",
               opacity: seSubmitting ? 0.5 : 1,
             }}>
-              {seSubmitting ? "Saving..." : currentUser && ['admin', 'commentator_admin', 'commentator'].includes(currentUser.role) ? "Save Final Score" : "Submit Score for Approval"}
+              {seSubmitting ? "Saving..." : currentUser && ['admin', 'commentator'].includes(currentUser.role) ? "Save Final Score" : "Submit Score for Approval"}
             </button>
             <button onClick={() => setScoreEntryMatch(null)} style={{
               width: "100%", marginTop: 6, padding: 8, borderRadius: 8,

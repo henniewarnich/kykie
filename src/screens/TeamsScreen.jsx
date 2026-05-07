@@ -31,7 +31,7 @@ export default function TeamsScreen({ currentUser, onSave, onBack, getShareLink 
   const [tierEdit, setTierEdit] = useState(null); // { teamId, teamName, ... } for override popup
   const [coachLookup, setCoachLookup] = useState(null);
 
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'commentator_admin';
+  const isAdmin = currentUser?.role === 'admin';
 
   const load = useCallback(async () => {
     setLoading(true);

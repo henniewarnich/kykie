@@ -23,7 +23,7 @@ export default function AdminCreditsScreen({ currentUser, onBack }) {
     // Get all commentator-role profiles
     const { data: profiles } = await supabase.from('profiles')
       .select('id, firstname, lastname, alias_nickname, email, role, roles, commentator_status')
-      .or('role.in.(admin,commentator_admin,commentator),roles.cs.{commentator},roles.cs.{commentator_admin}');
+      .or('role.in.(admin,commentator),roles.cs.{commentator}');
 
     // Get contributor_stats for all
     const { data: stats } = await supabase.from('contributor_stats').select('*');

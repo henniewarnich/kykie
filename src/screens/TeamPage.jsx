@@ -713,7 +713,7 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
     sessionStorage.setItem('kykie-active-role', role);
     if (role === 'coach') window.location.hash = '#/coach';
     else if (role === 'commentator') window.location.hash = '#/admin';
-    else if (role === 'admin' || role === 'commentator_admin') window.location.hash = '#/admin';
+    else if (role === 'admin') window.location.hash = '#/admin';
     else window.location.hash = '#/home';
     window.location.reload();
   };

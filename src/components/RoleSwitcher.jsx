@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 
 const ROLE_META = {
   admin: { label: 'Admin', color: '#EF4444', route: '#/admin' },
-  commentator_admin: { label: 'Comm Admin', color: '#F59E0B', route: '#/admin' },
   commentator: { label: 'Commentator', color: '#10B981', route: '#/record' },
   coach: { label: 'Coach', color: '#8B5CF6', route: '#/coach' },
 };

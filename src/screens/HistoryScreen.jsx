@@ -38,7 +38,7 @@ export default function HistoryScreen({ games, currentUser, onSelect, onBack, on
   const [reportsByMatch, setReportsByMatch] = useState({});
 
   const isApprentice = currentUser?.role === 'commentator' && currentUser?.commentator_status === 'apprentice';
-  const isAdminRole = currentUser?.role === 'admin' || currentUser?.role === 'commentator_admin';
+  const isAdminRole = currentUser?.role === 'admin';
 
   // Fetch all ended + abandoned matches from Supabase
   const fetchCloud = async () => {
@@ -276,7 +276,7 @@ export default function HistoryScreen({ games, currentUser, onSelect, onBack, on
               : isLive
                 ? (recName ? `Recorded from video by ${recName}` : 'LIVE')
                 : null;
-            const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'commentator_admin';
+            const isAdmin = currentUser?.role === 'admin';
             return (
               <div key={g.id} style={{ ...S.card, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", opacity: g.status === 'abandoned' ? 0.5 : 1 }}>
                 {/* Video Stats button */}

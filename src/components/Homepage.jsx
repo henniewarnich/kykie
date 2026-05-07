@@ -376,10 +376,10 @@ export default function Homepage({ currentUser, liveMatches, onNavigate }) {
       )}
 
       {/* Logged-in quick actions (not for admin — they use More menu) */}
-      {currentUser && !['admin', 'commentator_admin'].includes(currentUser.role) && (() => {
+      {currentUser && !['admin'].includes(currentUser.role) && (() => {
         const role = currentUser.role;
-        const isComm = ['admin', 'commentator_admin', 'commentator'].includes(role);
-        const isAdmin = ['admin', 'commentator_admin'].includes(role);
+        const isComm = ['admin', 'commentator'].includes(role);
+        const isAdmin = ['admin'].includes(role);
         const isApprentice = currentUser.commentator_status === 'apprentice';
         const goAdmin = (scr) => { 
           window.location.hash = scr ? `#/admin/${scr}` : '#/admin'; 

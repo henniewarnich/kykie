@@ -73,7 +73,7 @@ export default function HomeScreen({ teamCount, gameCount, onNavigate, syncing, 
               </div>
             )}
             {[
-            ...(['commentator', 'commentator_admin'].includes(currentUser?.role) ? [
+            ...(['commentator'].includes(currentUser?.role) ? [
               ["training", "school", "#06B6D4", "Training", "Training materials & benchmark test"],
               ["start_demo", "bolt", "#8B5CF6", "Try Demo Match", "Practice the recorder — data is discarded"],
             ] : []),
@@ -83,10 +83,10 @@ export default function HomeScreen({ teamCount, gameCount, onNavigate, syncing, 
               ["teams", "buildings", "#3B82F6", "Institutions & Teams", `${teamCount} team${teamCount !== 1 ? "s" : ""}`],
             ] : []),
             ["history", "bar_chart", "#8B5CF6", "Game History", (() => { const n = playedCount ?? gameCount; return `${n} game${n !== 1 ? "s" : ""}`; })()],
-            ...(['commentator', 'commentator_admin'].includes(currentUser?.role) && currentUser?.commentator_status === 'qualified' ? [
+            ...(['commentator'].includes(currentUser?.role) && currentUser?.commentator_status === 'qualified' ? [
               ["credits", "coins", "#F59E0B", "My Credits", "Your credit statement & vouchers"],
             ] : []),
-            ...(currentUser?.role === 'admin' || currentUser?.role === 'commentator_admin' ? [
+            ...(currentUser?.role === 'admin' ? [
               ["users", "user_plus", "#EF4444", "Users", "Manage user accounts"],
               ["rankings", "trophy", "#F59E0B", "Rankings", "Manage team rankings"],
               ["pending", "pending", "#EC4899", "Pending Approvals", pendingCount > 0 ? `${pendingCount} awaiting review` : "No pending items"],

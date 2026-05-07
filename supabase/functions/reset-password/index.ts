@@ -36,9 +36,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Check caller is admin or commentator_admin
+    // Check caller is admin
     const { data: profile } = await callerClient.from('profiles').select('role').eq('id', caller.id).single()
-    if (!profile || !['admin', 'commentator_admin'].includes(profile.role)) {
+    if (!profile || profile.role !== 'admin') {
       return new Response(JSON.stringify({ error: 'Only admins can reset passwords' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },

@@ -95,7 +95,7 @@ function getHashRoute() {
 function getHomeHash(user) {
   if (!user) return '#/';
   if (user.role === 'coach') return '#/coach';
-  if (['admin', 'commentator_admin'].includes(user.role)) return '#/admin';
+  if (['admin'].includes(user.role)) return '#/admin';
   if (user.role === 'commentator') {
     return user.commentator_status === 'trainee' ? '#/training' : '#/admin';
   }
@@ -240,7 +240,7 @@ export default function App() {
       return; // Don't navigate — show device verification
     }
 
-    if (['admin', 'commentator_admin', 'commentator'].includes(profile.role)) {
+    if (['admin', 'commentator'].includes(profile.role)) {
       if (profile.role === 'commentator' && profile.commentator_status === 'trainee') {
         window.location.hash = '#/training';
       } else {
@@ -305,7 +305,7 @@ export default function App() {
 
   // ── MAINTENANCE MODE ──
   // Admin/CommAdmin bypass maintenance to toggle it off
-  if (maintenanceMode && !['admin', 'commentator_admin'].includes(currentUser?.role)) {
+  if (maintenanceMode && !['admin'].includes(currentUser?.role)) {
     const handleMaintTap = () => {
       const next = maintDoor.taps + 1;
       if (next >= 5) setMaintDoor(d => ({ ...d, taps: next, show: true }));
@@ -317,7 +317,7 @@ export default function App() {
         const { data, error } = await supabase.auth.signInWithPassword({ email: maintDoor.email, password: maintDoor.password });
         if (error) { setMaintDoor(d => ({ ...d, error: error.message, loading: false })); return; }
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-        if (!profile || !['admin', 'commentator_admin'].includes(profile.role)) {
+        if (!profile || !['admin'].includes(profile.role)) {
           setMaintDoor(d => ({ ...d, error: 'Admin access required', loading: false }));
           await supabase.auth.signOut();
           return;
@@ -429,9 +429,9 @@ export default function App() {
     return <CrowdSubmitScreen currentUser={currentUser} onBack={() => { window.location.hash = getHomeHash(currentUser); }} initialMode={route.mode || null} />;
   }
 
-  // Pending approvals (admin/comm_admin)
+  // Pending approvals (admin only)
   if (route.type === 'pending') {
-    if (!currentUser || !['admin', 'commentator_admin'].includes(currentUser.role)) {
+    if (!currentUser || !['admin'].includes(currentUser.role)) {
       return <LoginPage onLogin={handleLogin} />;
     }
     return <PendingApprovalsScreen currentUser={currentUser} onBack={() => { window.location.hash = '#/admin'; }} />;
@@ -494,7 +494,7 @@ export default function App() {
 
   // Commentator recorder
   if (route.type === 'record') {
-    if (!currentUser || !['admin', 'commentator_admin', 'commentator', 'supporter'].includes(currentUser.role)) {
+    if (!currentUser || !['admin', 'commentator', 'supporter'].includes(currentUser.role)) {
       return <LoginPage onLogin={handleLogin} />;
     }
     // Trainee commentators can't record real matches
@@ -512,7 +512,7 @@ export default function App() {
 
   // Coach area — standalone coach dashboard for team detail views
   if (route.type === 'coach') {
-    if (!currentUser || !['admin', 'commentator_admin', 'coach'].includes(currentUser.role)) {
+    if (!currentUser || !['admin', 'coach'].includes(currentUser.role)) {
       return <LoginPage onLogin={handleLogin} />;
     }
     // Pending coach — awaiting admin approval
@@ -545,7 +545,7 @@ export default function App() {
 
   // Admin area
   if (route.type === 'admin') {
-    if (!currentUser || !['admin', 'commentator_admin', 'commentator'].includes(currentUser.role)) {
+    if (!currentUser || !['admin', 'commentator', 'coach'].includes(currentUser.role)) {
       return <LoginPage onLogin={handleLogin} />;
     }
     // Trainee commentators go to training instead
@@ -594,7 +594,7 @@ export default function App() {
 
 function AppContent({ store, screen, setScreen, matchConfig, setMatchConfig, reviewGame, setReviewGame, currentUser, onLogout, onRoleSwitch }) {
   const navigate = (target, data) => {
-    if (target === "home" && currentUser && !['admin', 'commentator_admin', 'commentator'].includes(currentUser.role)) {
+    if (target === "home" && currentUser && !['admin', 'commentator'].includes(currentUser.role)) {
       window.location.hash = getHomeHash(currentUser);
       return;
     }
@@ -828,7 +828,7 @@ function AppContent({ store, screen, setScreen, matchConfig, setMatchConfig, rev
 
     case "coach_view":
       if (!reviewGame) { navigate("history"); return null; }
-      return <CoachLiveScreen match={{ ...reviewGame, status: "ended" }} events={reviewGame.events || []} matchTime={reviewGame.duration || 0} running={false} onBack={() => navigate("game_review", reviewGame)} teamTier={['admin','commentator_admin'].includes(currentUser?.role) ? 'free_plus' : 'free'} />;
+      return <CoachLiveScreen match={{ ...reviewGame, status: "ended" }} events={reviewGame.events || []} matchTime={reviewGame.duration || 0} running={false} onBack={() => navigate("game_review", reviewGame)} teamTier={currentUser?.role === 'admin' ? 'free_plus' : 'free'} />;
 
     case "match_edit":
       if (!reviewGame) { navigate("history"); return null; }

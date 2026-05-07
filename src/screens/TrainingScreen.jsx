@@ -194,11 +194,15 @@ export default function TrainingScreen({ currentUser, onLogout, onRoleSwitch, on
 
       {/* Status badge */}
       <div style={S.statusBadge}>
-        <div style={{ fontSize: 28 }}>🎙️</div>
+        <div style={{ fontSize: 28 }}>{currentUser?.role === 'coach' ? '🏑' : '🎙️'}</div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#F59E0B' }}>Commentator trainee</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#F59E0B' }}>
+            {currentUser?.role === 'coach' ? 'Coach training' : 'Commentator trainee'}
+          </div>
           <div style={{ fontSize: 10, color: '#94A3B8', lineHeight: 1.4 }}>
-            Complete training to unlock live recording, scheduling, and earn credits.
+            {currentUser?.role === 'coach'
+              ? 'Learn how to record matches accurately so the stats reflect what really happened on the pitch.'
+              : 'Complete training to unlock live recording, scheduling, and earn credits.'}
           </div>
         </div>
       </div>
@@ -207,10 +211,10 @@ export default function TrainingScreen({ currentUser, onLogout, onRoleSwitch, on
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#64748B', marginBottom: 6 }}>
           <span>Progress</span>
-          <span>{stepsComplete} of 3 complete</span>
+          <span>{stepsComplete} of {currentUser?.role === 'coach' ? 2 : 3} complete</span>
         </div>
         <div style={{ height: 6, background: '#1E293B', borderRadius: 3, overflow: 'hidden' }}>
-          <div style={{ width: `${(stepsComplete / 3) * 100}%`, height: '100%', background: '#10B981', borderRadius: 3, transition: 'width 0.3s' }} />
+          <div style={{ width: `${(stepsComplete / (currentUser?.role === 'coach' ? 2 : 3)) * 100}%`, height: '100%', background: '#10B981', borderRadius: 3, transition: 'width 0.3s' }} />
         </div>
       </div>
 
@@ -269,7 +273,8 @@ export default function TrainingScreen({ currentUser, onLogout, onRoleSwitch, on
         )}
       </div>
 
-      {/* Step 3: Benchmark test */}
+      {/* Step 3: Benchmark test — commentators only */}
+      {currentUser?.role !== 'coach' && (
       <div style={{
         ...S.card,
         borderLeft: canTest ? '3px solid #F59E0B' : '3px solid #334155',
@@ -300,21 +305,26 @@ export default function TrainingScreen({ currentUser, onLogout, onRoleSwitch, on
           </button>
         )}
       </div>
+      )}
 
-      {/* What you'll unlock */}
-      <div style={{ fontSize: 11, color: '#64748B', marginBottom: 8, fontWeight: 600 }}>After qualifying you can:</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-        {[
-          'Record live matches (earn 50 credits)',
-          'Record video reviews (earn 20-30 credits)',
-          'Schedule and claim matches',
-          'Earn vouchers (100 credits = R100)',
-        ].map((item, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#94A3B8' }}>
-            <span style={{ color: '#10B981' }}>●</span> {item}
-          </div>
-        ))}
-      </div>
+      {/* What you'll unlock — commentators only */}
+      {currentUser?.role !== 'coach' && (
+      <>
+        <div style={{ fontSize: 11, color: '#64748B', marginBottom: 8, fontWeight: 600 }}>After qualifying you can:</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+          {[
+            'Record live matches (earn 50 credits)',
+            'Record video reviews (earn 20-30 credits)',
+            'Schedule and claim matches',
+            'Earn vouchers (100 credits = R100)',
+          ].map((item, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#94A3B8' }}>
+              <span style={{ color: '#10B981' }}>●</span> {item}
+            </div>
+          ))}
+        </div>
+      </>
+      )}
 
       {/* Home link */}
       <button onClick={() => { window.location.hash = '#/browse'; }} style={{

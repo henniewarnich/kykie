@@ -59,7 +59,7 @@ function TeamPickerWithSearch({ label, teams, selected, onSelect, otherId }) {
 
 export default function MatchSetupScreen({ teams, games, onStart, onImportGame, onBack, onManageTeams, currentUser }) {
   const [mode, setMode] = useState(null);
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'commentator_admin';
+  const isAdmin = currentUser?.role === 'admin';
   const modes = isAdmin ? MODES : MODES.filter(m => m.id !== 'import');
   const [liveMode, setLiveMode] = useState(null); // 'lite' | 'pro'
   const [showChooser, setShowChooser] = useState(false);

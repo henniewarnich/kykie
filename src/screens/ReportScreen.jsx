@@ -24,7 +24,7 @@ export default function ReportScreen({ reportId, matchId, currentUser, onBack })
         const { data, error: fetchError } = await query.single();
         if (fetchError || !data) { setError('not_found'); setLoading(false); return; }
         setReport(data);
-        const isAdmin = ['admin', 'commentator_admin'].includes(currentUser.role);
+        const isAdmin = currentUser.role === 'admin';
         if (isAdmin) { setIsCoachForMatch(true); }
         else {
           const { data: coachLinks } = await supabase.from('coach_teams').select('team_id').eq('coach_id', currentUser.id);

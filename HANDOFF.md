@@ -1,5 +1,5 @@
 # kykie.net Hockey Stats PWA — Handoff Document
-**Version: 7.22.4 | Date: 7 May 2026**
+**Version: 7.23.3 | Date: 7 May 2026**
 
 ## Project Overview
 A Progressive Web App for live school hockey match stats, commentary, and analytics.
@@ -36,7 +36,6 @@ A Progressive Web App for live school hockey match stats, commentary, and analyt
 | Public | `#/team/{slug}` | Score, commentary, emoji reactions via team URL |
 | Supporter | `#/submit` | Submit results, upcoming matches, suggest teams |
 | Commentator | `#/record` | Dashboard with assigned matches, Live + Live Pro recording |
-| Comm Admin | `#/admin` | Everything commentator + schedule, manage, approve |
 | Coach | `#/coach` | Dashboard → team pages with Overall/Matches/Trends/Live Stats |
 | Admin | `#/admin` | Full access: all admin screens |
 
@@ -66,7 +65,42 @@ A Progressive Web App for live school hockey match stats, commentary, and analyt
 - **Report notification**: `notify_coaches_of_report(p_report_id)` RPC → emails coaches of both teams
 - **Gmail signature**: kykie-icon-dark.png + name + kykie.net
 
-## Session Summary (7 May 2026)
+## Session Summary (7 May 2026 — afternoon)
+
+### Code Changes (v7.23.2 → v7.23.3)
+- **Added `mobile_number` field on profiles**
+  - New optional column on `profiles` (TEXT, nullable) and updated `register_crowd_profile` RPC
+  - Self-registration form now collects "Mobile Number" alongside Home Town
+  - **Run** `upgrade-scripts/v7.23.3/migration-mobile-number.sql` in Supabase SQL editor (production AND staging)
+- **Admin User Management — full Profile Details on Edit screen**
+  - Edit User now shows a read-only "Profile details" panel: Email, Date of birth, Gender, Home town, Sport interest, Supporting institutions (resolved to names), Notification preferences, Terms-accepted timestamp, Last seen, Joined
+  - Mobile number is **editable** by admin (the only field admins can fill in for existing users without that data)
+
+### Code Changes (v7.23.1 → v7.23.2)
+- **Coach commentator picker → search instead of button grid** — when a coach schedules a match, the "Assign Commentators" picker now shows a search input that only surfaces commentators whose registration `supporting_institution_ids` overlaps with the institutions of the coach's assigned teams (derived from `coach_teams`)
+  - Selected commentators show as removable chips above the search; admins/commentators scheduling matches still see the original button grid
+- **Commentator self-reservation** — on the Match Schedule list, a commentator can now reserve any unassigned upcoming match where the home or away team's institution is in their `supporting_institution_ids`
+  - "🎙 Reserve this match" button appears only when no other commentator is yet assigned (first-come-first-served); once reserved they see "✕ Cancel reservation"
+  - Uses the existing `match_commentators` self-insert RLS policy from v7.16.28 — **no schema or RLS changes**
+
+### Code Changes (v7.23.0 → v7.23.1)
+- **Coach Dashboard** — `#/coach` no longer redirects straight to a team page; it now shows a tile-based dashboard
+  - Tiles: Team Stats (top, jumps to first coached team page — existing dropdown handles multi-team), Training, Try Demo Match, Match Schedule, New Match, Game History
+  - Coaches keep `role = 'coach'` — no role changes; the `#/admin` route gate now also accepts `coach` so they can land on Match Schedule, New Match and Game History
+  - "Back" from any of those screens routes coaches back to `#/coach` (the new dashboard) via the existing `getHomeHash` logic
+  - Training screen now renders coach-appropriate copy (no "Commentator trainee" badge, no benchmark test step, no "After qualifying" credits list) when opened by a coach
+  - **Open by design:** coaches can schedule, record and quick-score *any* match, not just their team's — same scope as commentators
+
+### Code Changes (v7.22.4 → v7.23.0)
+- **Removed Commentator Admin role** — simplification; the role had no users assigned, so this is a behaviour-neutral cleanup
+  - Frontend: dropped from RoleSwitcher dropdown, User Management role list, System Health legend; collapsed all `['admin', 'commentator_admin']` gating checks down to plain admin checks across ~17 files
+  - Edge function: `supabase/functions/reset-password` now only accepts `admin` callers
+  - DB schema **untouched** — `profiles.role` still technically allows `commentator_admin` as a value, but the UI no longer offers it. Cleanup deferred (see TODO below)
+
+## TODO (deferred)
+- **Drop `commentator_admin` from RLS policies + audit RPC** — write a migration that rewrites every policy currently using `role IN ('admin', 'commentator_admin', ...)` to drop the role, and updates the `audit_log` RPC's `commentator_admin` branch. Touched migrations to revisit: `baseline/migration-users.sql`, `baseline/migration-phase2-rls.sql`, `baseline/migration-audit.sql`, `v7.9.0/migration-crowd-submissions.sql`, `v7.9.28/migration-issues.sql`, `v7.9.34/migration-contributors.sql`, `v7.9.35/migration-site-settings.sql`, `v7.14.0/migration-user-devices.sql`, `v7.16.27/migration-vouchers.sql`, `v7.16.28/migration-commentator-tracking.sql`, `v7.17.0/migration-team-credits.sql`, `v7.19.0/migration-match-reports.sql`, `v7.21.0/migration-communication-log.sql`. Schedule for a calm week (not before a weekend of matches).
+
+## Session Summary (7 May 2026 — morning)
 
 ### Code Changes (v7.22.3 → v7.22.4)
 - **Live Pro rotated field fills available width again** — v7.22.3's clamp was too aggressive on wide screens (field appeared squashed); reverted to the original scale (`fieldW / FIELD_H`)

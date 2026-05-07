@@ -194,7 +194,6 @@ export default function SystemHealthScreen({ onBack }) {
 
   const roleMeta = {
     admin: { color: '#EF4444' },
-    commentator_admin: { label: 'Comm Admin', color: '#F59E0B' },
     commentator: { color: '#10B981' },
     coach: { color: '#8B5CF6' },
     supporter: { color: '#3B82F6' },

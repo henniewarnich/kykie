@@ -54,6 +54,9 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
   const [editMatch, setEditMatch] = useState(null);
   const [matchComms, setMatchComms] = useState({}); // matchId -> [commentator profiles]
   const [latestRankings, setLatestRankings] = useState({});
+  const [myInstitutionIds, setMyInstitutionIds] = useState(new Set());
+  const [commSearch, setCommSearch] = useState("");
+  const [reservingMatchId, setReservingMatchId] = useState(null);
 
   const ml = parseInt(matchLength) || 60;
   const inputStyle = { width: "100%", padding: 10, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.text, fontSize: 13, outline: "none", boxSizing: "border-box" };
@@ -71,14 +74,13 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
   const load = async () => {
     setLoading(true);
     const isCrowd = currentUser?.role === 'supporter';
-    const [matches, comms, commAdmins, { data: teams }] = await Promise.all([
+    const [matches, comms, { data: teams }] = await Promise.all([
       supabase.from('matches').select(`*, ${MATCH_HOME_TEAM}, ${MATCH_AWAY_TEAM}`).in('status', ['upcoming', 'live']).order('match_date', { ascending: true }).order('scheduled_time', { ascending: true }).then(r => r.data || []),
       isCrowd ? Promise.resolve([]) : listUsersByRole('commentator'),
-      isCrowd ? Promise.resolve([]) : listUsersByRole('commentator_admin'),
       supabase.from('teams').select(TEAM_SELECT).order('name'),
     ]);
     setUpcoming(matches);
-    setCommentators([...commAdmins, ...comms]);
+    setCommentators(comms);
     setAllTeams(teams || []);
 
     // Load commentator assignments (skip for crowd users who don't need them)
@@ -103,7 +105,50 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
     }
     setMatchComms(commsMap);
     fetchLatestRankings().then(r => setLatestRankings(r)).catch(() => {});
+
+    // Load current user's institution affinities (coach: from coach_teams; commentator: from profile)
+    if (currentUser?.role === 'coach') {
+      const { data: ct } = await supabase.from('coach_teams')
+        .select('teams(institution_id)')
+        .eq('coach_id', currentUser.id);
+      setMyInstitutionIds(new Set((ct || []).map(r => r.teams?.institution_id).filter(Boolean)));
+    } else if (currentUser?.role === 'commentator') {
+      setMyInstitutionIds(new Set(currentUser.supporting_institution_ids || []));
+    } else {
+      setMyInstitutionIds(new Set());
+    }
+
     setLoading(false);
+  };
+
+  const handleReserve = async (m) => {
+    if (!currentUser?.id) return;
+    setReservingMatchId(m.id);
+    const { error } = await supabase.from('match_commentators').insert({
+      match_id: m.id, commentator_id: currentUser.id,
+    });
+    if (error) {
+      alert(`Could not reserve: ${error.message}`);
+      setReservingMatchId(null);
+      return;
+    }
+    await load();
+    setReservingMatchId(null);
+  };
+
+  const handleUnreserve = async (m) => {
+    if (!currentUser?.id) return;
+    if (!confirm('Cancel your reservation for this match?')) return;
+    setReservingMatchId(m.id);
+    const { error } = await supabase.from('match_commentators').delete()
+      .eq('match_id', m.id).eq('commentator_id', currentUser.id);
+    if (error) {
+      alert(`Could not cancel reservation: ${error.message}`);
+      setReservingMatchId(null);
+      return;
+    }
+    await load();
+    setReservingMatchId(null);
   };
 
   const resetForm = () => {
@@ -530,12 +575,61 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
           <div style={{ fontSize: 11, color: theme.textDim, marginBottom: 4 }}>Assign Commentators</div>
           {commentators.length === 0 ? (
             <div style={{ fontSize: 10, color: theme.textDim, fontStyle: "italic" }}>No commentators created yet</div>
-          ) : (
+          ) : currentUser?.role === 'coach' ? (() => {
+            // Coach view: search-based picker, filtered to commentators sharing an institution
+            const eligible = commentators.filter(c => {
+              const ids = c.supporting_institution_ids || [];
+              return ids.some(id => myInstitutionIds.has(id));
+            });
+            const q = commSearch.trim().toLowerCase();
+            const matching = eligible
+              .filter(c => !selectedComms.includes(c.id))
+              .filter(c => !q || `${c.firstname || ''} ${c.lastname || ''}`.toLowerCase().includes(q));
+            return (
+              <>
+                {selectedComms.length > 0 && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+                    {selectedComms.map(cid => {
+                      const c = commentators.find(x => x.id === cid);
+                      if (!c) return null;
+                      return (
+                        <span key={cid} style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          padding: '4px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700,
+                          background: '#10B98122', color: '#10B981', border: '1px solid #10B98144',
+                        }}>
+                          {c.firstname} {c.lastname}
+                          <span onClick={() => toggleComm(cid)} style={{ cursor: 'pointer', marginLeft: 2, fontSize: 13, lineHeight: 1 }}>×</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                <input style={{ ...inputStyle, fontSize: 12 }} value={commSearch} onChange={e => setCommSearch(e.target.value)}
+                  placeholder={eligible.length === 0 ? 'No commentators support your institution' : '🔍 Search commentators...'}
+                  disabled={eligible.length === 0} />
+                {commSearch.trim() && (
+                  <div style={{ maxHeight: 140, overflowY: 'auto', marginTop: 4, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.bg }}>
+                    {matching.length === 0 ? (
+                      <div style={{ padding: '8px 12px', fontSize: 11, color: theme.textDim }}>No matching commentators</div>
+                    ) : matching.map(c => (
+                      <div key={c.id} onClick={() => { toggleComm(c.id); setCommSearch(''); }}
+                        style={{ padding: '8px 12px', fontSize: 12, color: theme.text, cursor: 'pointer', borderBottom: `1px solid ${theme.border}` }}>
+                        {c.firstname} {c.lastname}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ fontSize: 9, color: theme.textDim, marginTop: 6 }}>
+                  Showing commentators who support {myInstitutionIds.size === 0 ? 'your assigned teams' : `${myInstitutionIds.size} institution${myInstitutionIds.size !== 1 ? 's' : ''} you coach at`}.
+                </div>
+              </>
+            );
+          })() : (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {commentators.map(c => {
                 const sel = selectedComms.includes(c.id);
-                const isCA = c.role === 'commentator_admin';
-                const color = isCA ? "#F59E0B" : "#10B981";
+                const color = "#10B981";
                 return (
                   <button key={c.id} onClick={() => toggleComm(c.id)} style={{
                     padding: "6px 10px", borderRadius: 8, fontSize: 10, fontWeight: 700,
@@ -543,7 +637,7 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
                     background: sel ? color + "22" : theme.bg,
                     color: sel ? color : theme.textMuted, cursor: "pointer",
                   }}>
-                    {sel ? "✓ " : ""}{c.firstname} {c.lastname}{isCA ? " ★" : ""}
+                    {sel ? "✓ " : ""}{c.firstname} {c.lastname}
                   </button>
                 );
               })}
@@ -595,6 +689,12 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
               const homeRank = latestRankings[m.home_team?.id]?.rank;
               const awayRank = latestRankings[m.away_team?.id]?.rank;
               const isTop10Match = isApprentice && ((homeRank && homeRank <= 10) || (awayRank && awayRank <= 10));
+              // Self-reservation eligibility (commentators only)
+              const myReservation = comms.find(c => c.commentator_id === currentUser?.id);
+              const homeInstId = m.home_team?.institution?.id;
+              const awayInstId = m.away_team?.institution?.id;
+              const matchInstitutionMatches = (homeInstId && myInstitutionIds.has(homeInstId)) || (awayInstId && myInstitutionIds.has(awayInstId));
+              const canReserve = currentUser?.role === 'commentator' && !myReservation && comms.length === 0 && matchInstitutionMatches && !isApprentice;
               return (
                 <div key={m.id} style={{
                   background: theme.surface, borderRadius: 10, padding: "10px 12px",
@@ -634,18 +734,32 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
                   ) : isLive ? (
                     <div style={{ fontSize: 9, color: "#EF4444" }}>🔒 Started by another user</div>
                   ) : (
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {currentUser?.role !== 'supporter' && (
-                        <button onClick={() => handleStartLive(m)} style={{ flex: 1, padding: 6, borderRadius: 6, fontSize: 10, fontWeight: 700, border: "none", background: "#F59E0B", color: "#0B0F1A", cursor: "pointer" }}>🏑 Start Live</button>
+                    <>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {currentUser?.role !== 'supporter' && (
+                          <button onClick={() => handleStartLive(m)} style={{ flex: 1, padding: 6, borderRadius: 6, fontSize: 10, fontWeight: 700, border: "none", background: "#F59E0B", color: "#0B0F1A", cursor: "pointer" }}>🏑 Start Live</button>
+                        )}
+                        <button onClick={() => handleQuickScore(m)} style={{ flex: 1, padding: 6, borderRadius: 6, fontSize: 10, fontWeight: 700, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.textMuted, cursor: "pointer" }}>💾 Quick Score</button>
+                        {currentUser?.role !== 'supporter' && !isApprentice && (
+                          <button onClick={() => handleEdit(m)} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.textMuted, cursor: "pointer" }}>✏️</button>
+                        )}
+                        {(currentUser?.role === 'admin' || m.created_by === currentUser?.id) && (
+                          <button onClick={() => { if (confirm("Delete this match?")) handleDelete(m.id); }} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: "1px solid #EF444444", background: "transparent", color: "#EF4444", cursor: "pointer" }}>🗑</button>
+                        )}
+                      </div>
+                      {canReserve && (
+                        <button onClick={() => handleReserve(m)} disabled={reservingMatchId === m.id}
+                          style={{ width: '100%', marginTop: 6, padding: 6, borderRadius: 6, fontSize: 10, fontWeight: 700, border: '1px solid #8B5CF644', background: '#8B5CF611', color: '#8B5CF6', cursor: 'pointer', opacity: reservingMatchId === m.id ? 0.5 : 1 }}>
+                          {reservingMatchId === m.id ? 'Reserving…' : '🎙 Reserve this match'}
+                        </button>
                       )}
-                      <button onClick={() => handleQuickScore(m)} style={{ flex: 1, padding: 6, borderRadius: 6, fontSize: 10, fontWeight: 700, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.textMuted, cursor: "pointer" }}>💾 Quick Score</button>
-                      {currentUser?.role !== 'supporter' && !isApprentice && (
-                        <button onClick={() => handleEdit(m)} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.textMuted, cursor: "pointer" }}>✏️</button>
+                      {myReservation && currentUser?.role === 'commentator' && (
+                        <button onClick={() => handleUnreserve(m)} disabled={reservingMatchId === m.id}
+                          style={{ width: '100%', marginTop: 6, padding: 6, borderRadius: 6, fontSize: 10, fontWeight: 700, border: '1px solid #EF444444', background: 'transparent', color: '#EF4444', cursor: 'pointer', opacity: reservingMatchId === m.id ? 0.5 : 1 }}>
+                          {reservingMatchId === m.id ? 'Cancelling…' : '✕ Cancel reservation'}
+                        </button>
                       )}
-                      {(currentUser?.role === 'admin' || m.created_by === currentUser?.id) && (
-                        <button onClick={() => { if (confirm("Delete this match?")) handleDelete(m.id); }} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: "1px solid #EF444444", background: "transparent", color: "#EF4444", cursor: "pointer" }}>🗑</button>
-                      )}
-                    </div>
+                    </>
                   )}
                 </div>
               );
