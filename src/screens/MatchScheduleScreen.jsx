@@ -4,6 +4,7 @@ import { scheduleMatch, assignCommentators, updateScheduledMatch, lockMatch, unl
 import { awardQuickScoreCredits, awardScheduleCredits } from '../utils/credits.js';
 import { listUsersByRole } from '../utils/auth.js';
 import { shareMatchLink } from '../utils/share.js';
+import Icon from '../components/Icons.jsx';
 import { BREAK_FORMATS, MATCH_TYPES } from '../utils/constants.js';
 import { S, theme } from '../utils/styles.js';
 import { parseSAST, parseSASTDate } from '../utils/helpers.js';
@@ -65,7 +66,7 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
     const away = teamShortName(m.away_team);
     const res = await shareMatchLink(m.id, { title: `${home} vs ${away}`, text: `Follow ${home} vs ${away} live on Kykie` });
     if (res.ok) {
-      setShareToast(res.method === 'clipboard' ? '🔗 Link copied' : null);
+      setShareToast(res.method === 'clipboard' ? 'Link copied' : null);
       if (res.method === 'clipboard') setTimeout(() => setShareToast(null), 2500);
     } else if (res.error && res.error !== 'cancelled') {
       setShareToast(`Share failed: ${res.error}`);
@@ -759,7 +760,9 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
                           <button onClick={() => handleEdit(m)} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.textMuted, cursor: "pointer" }}>✏️</button>
                         )}
                         <button onClick={() => handleShare(m)} title="Share match link"
-                          style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.textMuted, cursor: "pointer" }}>📋</button>
+                          style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: `1px solid ${theme.border}`, background: theme.bg, color: theme.textMuted, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
+                          <Icon name="share" size={14} />
+                        </button>
                         {(currentUser?.role === 'admin' || m.created_by === currentUser?.id) && (
                           <button onClick={() => { if (confirm("Delete this match?")) handleDelete(m.id); }} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: "1px solid #EF444444", background: "transparent", color: "#EF4444", cursor: "pointer" }}>🗑</button>
                         )}

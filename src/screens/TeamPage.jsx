@@ -20,6 +20,7 @@ import { predictMatch } from '../utils/predict.js';
 import { MATCH_AWAY_TEAM, MATCH_HOME_TEAM, TEAM_SELECT, teamColor, teamDerivedName, teamDisplayName, teamInitial, teamShortName, teamSlug as makeTeamSlug } from '../utils/teams.js';
 import KykieSpinner from '../components/KykieSpinner.jsx';
 import { shareMatchLink } from '../utils/share.js';
+import Icon from '../components/Icons.jsx';
 
 const fmtClock = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
 const fmtMin = (s) => `${Math.floor(s / 60)}'${String(s % 60).padStart(2, "0")}`;
@@ -204,7 +205,7 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
     const home = teamShortName(m.home_team) || 'Home';
     const away = teamShortName(m.away_team) || 'Away';
     const res = await shareMatchLink(m.id, { title: `${home} vs ${away}`, text: `${home} vs ${away} on Kykie` });
-    if (res.ok && res.method === 'clipboard') { setShareToast('🔗 Link copied'); setTimeout(() => setShareToast(null), 2500); }
+    if (res.ok && res.method === 'clipboard') { setShareToast('Link copied'); setTimeout(() => setShareToast(null), 2500); }
     else if (!res.ok && res.error && res.error !== 'cancelled') { setShareToast(`Share failed: ${res.error}`); setTimeout(() => setShareToast(null), 3000); }
   };
   const [selectedEvents, setSelectedEvents] = useState([]);
@@ -504,10 +505,16 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
               }).catch(() => {});
           }
 
-          // Auto-open a specific match if navigated from landing page
+          // Auto-open a specific match if navigated from a share link or landing page
           if (initialMatchId) {
             const target = ended.find(m => m.id === initialMatchId);
-            if (target) handleMatchTap(target);
+            if (target) {
+              handleMatchTap(target);
+            } else if (upcoming.some(m => m.id === initialMatchId)) {
+              setTab("upcoming");
+            } else if (live?.id === initialMatchId) {
+              setTab("live");
+            }
           }
 
           if (live) {
@@ -936,8 +943,8 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
                   </span>
                 )}
                 <span onClick={() => handleShareMatch(liveMatch)} title="Share live match link"
-                  style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", background: "#33415544", border: "1px solid #33415588", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}>
-                  📋 Share
+                  style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: "#94A3B8", background: "#33415544", border: "1px solid #33415588", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}>
+                  <Icon name="share" size={12} /> Share
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1345,8 +1352,8 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
                 </button>
               )}
               <button onClick={() => handleShareMatch(selectedMatch)} title="Share match link"
-                style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", background: "#33415522", border: "1px solid #33415588", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>
-                📋 Share
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: "#94A3B8", background: "#33415522", border: "1px solid #33415588", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>
+                <Icon name="share" size={12} /> Share
               </button>
             </div>
           </div>

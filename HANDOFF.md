@@ -1,5 +1,5 @@
 # kykie.net Hockey Stats PWA — Handoff Document
-**Version: 7.23.5 | Date: 11 May 2026**
+**Version: 7.23.6 | Date: 11 May 2026**
 
 ## Project Overview
 A Progressive Web App for live school hockey match stats, commentary, and analytics.
@@ -66,6 +66,11 @@ A Progressive Web App for live school hockey match stats, commentary, and analyt
 - **Gmail signature**: kykie-icon-dark.png + name + kykie.net
 
 ## Session Summary (11 May 2026)
+
+### Code Changes (v7.23.5 → v7.23.6)
+- **Shared upcoming-match links now land on the Upcoming tab** — TeamPage's `initialMatchId` handler only checked `ended` matches and ignored upcoming/live ones, so a shared link for an upcoming match opened the default Overall tab. Now: ended → match detail; upcoming → Upcoming tab; live → Live tab.
+- **Standard share icon** — replaced the 📋 emoji on all four share buttons with the canonical iOS-style share glyph (square box with upward arrow). Added a `share` entry to `Icons.jsx` so it's reusable. Toast copy simplified from "🔗 Link copied" to "Link copied".
+- **Landing page upcoming-match prompt** — the "Log in to predict" strip under each upcoming match looked detached. Removed the full border, kept a single hairline divider, made the whole strip clickable, bumped font 9 → 10 and brightened the colour. Wording: "**Log in** to predict the outcome of this match".
 
 ### Code Changes (v7.23.4 → v7.23.5)
 - **Fixed Turnover Won zone bug** — `LiveMatchScreen.handleBallTap` was logging every Turnover Won with `zone='Centre'` due to a ternary that returned "Centre" in both branches. Now reads the actual ball zone (`${zone.label} (${pos})`), mirroring Poss Conceded. Single writer affected; covers both home→away and away→home directions.

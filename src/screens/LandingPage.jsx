@@ -753,8 +753,9 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
                         );
                       })()}
                       {!currentUser && (
-                        <div style={{ background: "#1E293B", borderRadius: isExp ? 0 : "0 0 10px 10px", padding: "6px 10px", marginTop: -4, border: "1px solid #334155", borderTop: "1px solid #33415522", textAlign: "center", fontSize: 9, color: "#475569" }}>
-                          <span onClick={() => { window.location.hash = '#/login'; }} style={{ color: "#F59E0B", cursor: "pointer", fontWeight: 700 }}>Log in</span> to predict
+                        <div onClick={(e) => { e.stopPropagation(); window.location.hash = '#/login'; }}
+                          style={{ background: "#1E293B", borderRadius: isExp ? 0 : "0 0 10px 10px", padding: "8px 12px", marginTop: -1, borderTop: "1px solid #33415544", textAlign: "center", fontSize: 10, color: "#94A3B8", cursor: "pointer" }}>
+                          <span style={{ color: "#F59E0B", fontWeight: 700 }}>Log in</span> to predict the outcome of this match
                         </div>
                       )}
                       {isExp && (() => {

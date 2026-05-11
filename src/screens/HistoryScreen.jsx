@@ -4,6 +4,7 @@ import { S, theme } from '../utils/styles.js';
 import { MATCH_AWAY_TEAM, MATCH_HOME_TEAM, teamDisplayName, teamShortName } from '../utils/teams.js';
 import { logAudit } from '../utils/audit.js';
 import { shareMatchLink } from '../utils/share.js';
+import Icon from '../components/Icons.jsx';
 import MatchCardTeams from '../components/MatchCardTeams.jsx';
 import KykieSpinner from '../components/KykieSpinner.jsx';
 
@@ -46,7 +47,7 @@ export default function HistoryScreen({ games, currentUser, onSelect, onBack, on
     const home = teamShortName(g.teams?.home) || 'Home';
     const away = teamShortName(g.teams?.away) || 'Away';
     const res = await shareMatchLink(matchId, { title: `${home} vs ${away}`, text: `${home} vs ${away} on Kykie` });
-    if (res.ok && res.method === 'clipboard') { setShareToast('🔗 Link copied'); setTimeout(() => setShareToast(null), 2500); }
+    if (res.ok && res.method === 'clipboard') { setShareToast('Link copied'); setTimeout(() => setShareToast(null), 2500); }
     else if (!res.ok && res.error && res.error !== 'cancelled') { setShareToast(`Share failed: ${res.error}`); setTimeout(() => setShareToast(null), 3000); }
   };
 
@@ -378,8 +379,8 @@ export default function HistoryScreen({ games, currentUser, onSelect, onBack, on
                     {isSynced && (
                       <span onClick={(e) => handleShare(g, e)}
                         title="Share match link"
-                        style={{ fontSize: 8, color: '#94A3B8', cursor: 'pointer', fontWeight: 600, padding: '2px 6px' }}>
-                        📋 share
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 8, color: '#94A3B8', cursor: 'pointer', fontWeight: 600, padding: '2px 6px' }}>
+                        <Icon name="share" size={11} /> share
                       </span>
                     )}
                   </div>

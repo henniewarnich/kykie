@@ -73,6 +73,9 @@ const paths = {
   coach: {
     stroke: <><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M6 10l3-3 2 2 4-4 3 3"/></>,
   },
+  share: {
+    stroke: <><path d="M12 3v13"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></>,
+  },
 };
 
 export default function Icon({ name, size = 20, color, filled, style = {} }) {
