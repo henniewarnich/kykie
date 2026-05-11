@@ -6,7 +6,7 @@ import { supabase } from '../utils/supabase.js';
 import { logAudit } from '../utils/audit.js';
 import NavLogo from '../components/NavLogo.jsx';
 
-export default function GameReviewScreen({ game, onDelete, onBack, onNavigate, currentUser }) {
+export default function GameReviewScreen({ game, onDelete, onBack, onNavigate, currentUser, onStartVideoReview }) {
   const [deleting, setDeleting] = useState(false);
   const [events, setEvents] = useState(game.events || []);
   const [deletingEventId, setDeletingEventId] = useState(null);
@@ -172,18 +172,40 @@ export default function GameReviewScreen({ game, onDelete, onBack, onNavigate, c
 
       {/* Action buttons */}
       <div style={{ display: "flex", gap: 6, padding: "0 16px 10px", justifyContent: "center", flexWrap: "wrap" }}>
-        <button onClick={() => exportMatchJSON(G)} style={S.btnSm(theme.info, "#FFF")}>📦 JSON</button>
-        {onNavigate && (
+        {/* Admin-only actions */}
+        {isAdmin && (
           <>
-            {events.length > 0 && <button onClick={() => onNavigate("public_view", G)} style={S.btnSm("#10B981", "#FFF")}>📺 Public</button>}
-            {events.length > 0 && <button onClick={() => onNavigate("coach_view", G)} style={S.btnSm("#8B5CF6", "#FFF")}>🔒 Coach</button>}
-            <button onClick={() => onNavigate("match_edit", G)} style={S.btnSm(theme.surface, theme.textMuted)}>✏️ Edit</button>
+            <button onClick={() => exportMatchJSON(G)} style={S.btnSm(theme.info, "#FFF")}>📦 JSON</button>
+            {onNavigate && events.length > 0 && <button onClick={() => onNavigate("public_view", G)} style={S.btnSm("#10B981", "#FFF")}>📺 Public</button>}
+            {onNavigate && events.length > 0 && <button onClick={() => onNavigate("coach_view", G)} style={S.btnSm("#8B5CF6", "#FFF")}>🔒 Coach</button>}
+            {onNavigate && <button onClick={() => onNavigate("match_edit", G)} style={S.btnSm(theme.surface, theme.textMuted)}>✏️ Edit</button>}
+            {onDelete && <button onClick={() => { if (confirm("Delete this match permanently?")) onDelete(G.id); }}
+              style={{ ...S.btnSm("transparent", theme.danger), border: `1px solid ${theme.danger}44` }}>
+              🗑 Delete Match
+            </button>}
           </>
         )}
-        <button onClick={() => { if (confirm("Delete this match permanently?")) onDelete(G.id); }}
-          style={{ ...S.btnSm("transparent", theme.danger), border: `1px solid ${theme.danger}44` }}>
-          🗑 Delete Match
-        </button>
+        {/* Commentator: Start video recording (only if not yet recorded) + Report Issue */}
+        {!isAdmin && currentUser?.role === 'commentator' && (
+          <>
+            {!hasRecording && onStartVideoReview && (
+              <button onClick={() => onStartVideoReview(G)} style={S.btnSm("#8B5CF6", "#FFF")}>
+                📹 Start Video Recording
+              </button>
+            )}
+            <button onClick={() => { window.location.hash = '#/issues'; }}
+              style={S.btnSm("transparent", "#F59E0B")}>
+              ⚠️ Report Issue
+            </button>
+          </>
+        )}
+        {/* Public/Coach views also available to commentators if recording exists */}
+        {!isAdmin && onNavigate && events.length > 0 && (
+          <>
+            <button onClick={() => onNavigate("public_view", G)} style={S.btnSm("#10B981", "#FFF")}>📺 Public</button>
+            <button onClick={() => onNavigate("coach_view", G)} style={S.btnSm("#8B5CF6", "#FFF")}>🔒 Coach</button>
+          </>
+        )}
       </div>
       {isAdmin && hasRecording && (
         <div style={{ textAlign: 'center', padding: '0 16px 10px' }}>

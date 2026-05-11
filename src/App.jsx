@@ -5,8 +5,8 @@ import { saveData, loadData } from './utils/helpers.js';
 import { saveMatchToSupabase, startVideoReview, clearMatchEvents } from './utils/sync.js';
 import { supabase } from './utils/supabase.js';
 import { APP_VERSION } from './utils/constants.js';
-import { teamSlug } from './utils/teams.js';
-import { getSession, getProfile, signOut } from './utils/auth.js';
+import { teamSlug, teamShortName, teamColor, MATCH_HOME_TEAM, MATCH_AWAY_TEAM } from './utils/teams.js';
+import { getSession, getProfile, signOut, highestRole } from './utils/auth.js';
 import HomeScreen from './screens/HomeScreen.jsx';
 import TeamsScreen from './screens/TeamsScreen.jsx';
 import MatchSetupScreen from './screens/MatchSetupScreen.jsx';
@@ -91,11 +91,136 @@ function getHashRoute() {
     const id = hash.replace('match/', '').split('?')[0];
     return { type: 'match', matchId: id };
   }
+  if (hash.startsWith('review/')) {
+    const id = hash.replace('review/', '').split('?')[0];
+    return { type: 'review', matchId: id };
+  }
   if (hash === 'admin' || hash.startsWith('admin/') || hash.startsWith('admin?')) {
     const sub = hash.includes('/') ? hash.split('/')[1] : null;
     return { type: 'admin', screen: sub || null };
   }
   return { type: 'landing' };
+}
+
+// Resolves #/review/{id} → fetches match, renders GameReviewScreen.
+// Used for sharing a completed match with a commentator so they can
+// kick off a video-stats recording from the same link.
+function ReviewWrapper({ matchId, currentUser, onLogout, onRoleSwitch }) {
+  const [game, setGame] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const [matchConfig, setMatchConfig] = useState(null);
+
+  useEffect(() => {
+    if (!matchId) { setError('No match ID'); setLoading(false); return; }
+    (async () => {
+      try {
+        const { data: m, error: mErr } = await supabase
+          .from('matches')
+          .select(`*, ${MATCH_HOME_TEAM}, ${MATCH_AWAY_TEAM}`)
+          .eq('id', matchId)
+          .single();
+        if (mErr || !m) { setError('Match not found'); setLoading(false); return; }
+        const { data: events } = await supabase
+          .from('match_events')
+          .select('*')
+          .eq('match_id', matchId)
+          .order('seq', { ascending: false });
+        const built = {
+          id: m.id,
+          supabase_id: m.id,
+          homeScore: m.home_score || 0,
+          awayScore: m.away_score || 0,
+          duration: m.duration || 0,
+          date: m.match_date,
+          venue: m.venue,
+          matchType: m.match_type,
+          matchLength: m.match_length || 60,
+          breakFormat: m.break_format || 'quarters',
+          status: m.status,
+          teams: {
+            home: { name: teamShortName(m.home_team), color: teamColor(m.home_team), id: m.home_team?.id, institution: m.home_team?.institution },
+            away: { name: teamShortName(m.away_team), color: teamColor(m.away_team), id: m.away_team?.id, institution: m.away_team?.institution },
+          },
+          events: (events || []).map(e => ({
+            id: e.id, team: e.team, event: e.event,
+            zone: e.zone || '', detail: e.detail || '',
+            time: e.match_time || 0, seq: e.seq,
+          })),
+        };
+        setGame(built);
+      } catch (e) {
+        setError(e?.message || 'Could not load match');
+      }
+      setLoading(false);
+    })();
+  }, [matchId]);
+
+  const handleStartVideoReview = async (g) => {
+    const mid = g.supabase_id || g.id;
+    const result = await startVideoReview(mid, currentUser?.id);
+    if (result.error) { alert(result.error); return; }
+    if (result.existingEvents > 0) {
+      const confirmed = window.confirm(
+        `This match has ${result.existingEvents} existing events from a previous recording. Starting video review will replace them. Continue?`
+      );
+      if (!confirmed) return;
+      await clearMatchEvents(mid);
+    }
+    setMatchConfig({
+      home: g.teams?.home || {},
+      away: g.teams?.away || {},
+      matchLength: g.matchLength || 60,
+      breakFormat: g.breakFormat || 'quarters',
+      matchType: g.matchType || 'league',
+      venue: g.venue || '',
+      date: g.date,
+      isDemo: false,
+      isVideoReview: true,
+      videoReviewMatchId: mid,
+      savedScore: { home: g.homeScore, away: g.awayScore },
+    });
+    setRecording(true);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ ...S.app, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <KykieLoadingScreen />
+      </div>
+    );
+  }
+  if (error || !game) {
+    return (
+      <div style={{ fontFamily: "'Outfit',sans-serif", maxWidth: 430, margin: '0 auto', background: '#0B0F1A', minHeight: '100vh', color: '#F8FAFC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
+        <div style={{ fontSize: 24 }}>🏑</div>
+        <div style={{ fontSize: 14, fontWeight: 700 }}>{error || 'Match not found'}</div>
+        <button onClick={() => { window.location.hash = currentUser ? getHomeHash(currentUser) : ''; }}
+          style={{ marginTop: 8, padding: '8px 16px', borderRadius: 8, border: '1px solid #F59E0B44', background: '#F59E0B11', color: '#F59E0B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+          Go home
+        </button>
+      </div>
+    );
+  }
+  if (recording && matchConfig) {
+    return (
+      <div style={{ fontFamily: "'Outfit','DM Sans',sans-serif", maxWidth: 430, margin: "0 auto", background: "#0B0F1A", minHeight: "100vh" }}>
+        <LiveMatchScreen matchConfig={matchConfig} existingMatchId={matchConfig.videoReviewMatchId}
+          currentUser={currentUser}
+          onSaveGame={() => { window.location.hash = currentUser ? getHomeHash(currentUser) : ''; }}
+          onNavigate={() => { window.location.hash = currentUser ? getHomeHash(currentUser) : ''; }} />
+      </div>
+    );
+  }
+  return (
+    <GameReviewScreen
+      game={game}
+      currentUser={currentUser}
+      onBack={() => { window.location.hash = currentUser ? getHomeHash(currentUser) : ''; }}
+      onStartVideoReview={handleStartVideoReview}
+    />
+  );
 }
 
 // Resolves #/match/{id} → fetches home team, forwards to canonical #/team/{slug}?match={id}
@@ -233,10 +358,17 @@ export default function App() {
       if (session) {
         const profile = await getProfile();
         if (profile && !profile.blocked) {
-          // Restore switched role from session if valid
-          const savedRole = sessionStorage.getItem('kykie-active-role');
-          if (savedRole && profile.roles?.includes(savedRole)) {
-            profile.role = savedRole;
+          // Only admins can switch roles. For everyone else, the active role
+          // is forced to the highest role they hold (coach > commentator > supporter).
+          const hasAdmin = profile.roles?.includes('admin');
+          if (hasAdmin) {
+            const savedRole = sessionStorage.getItem('kykie-active-role');
+            if (savedRole && profile.roles?.includes(savedRole)) {
+              profile.role = savedRole;
+            }
+          } else {
+            sessionStorage.removeItem('kykie-active-role');
+            profile.role = highestRole(profile.roles) || profile.role;
           }
           setCurrentUser(profile);
           sessionStorage.setItem('kykie-user-id', profile.id);
@@ -272,6 +404,11 @@ export default function App() {
   }, []);
 
   const handleLogin = async (profile) => {
+    // Non-admins: pin to highest role; clear any stale switched-role.
+    if (!profile.roles?.includes('admin')) {
+      sessionStorage.removeItem('kykie-active-role');
+      profile.role = highestRole(profile.roles) || profile.role;
+    }
     setCurrentUser(profile);
     sessionStorage.setItem('kykie-user-id', profile.id);
 
@@ -304,6 +441,8 @@ export default function App() {
 
   const handleRoleSwitch = (newRole) => {
     if (!currentUser) return;
+    // Only admins are allowed to switch roles.
+    if (!currentUser.roles?.includes('admin')) return;
     sessionStorage.setItem('kykie-active-role', newRole);
     // Trainee commentators go to training
     if (newRole === 'commentator' && currentUser.commentator_status === 'trainee') {
@@ -429,6 +568,13 @@ export default function App() {
 
   if (route.type === 'match') {
     return <MatchRedirect matchId={route.matchId} currentUser={currentUser} />;
+  }
+
+  if (route.type === 'review') {
+    if (!currentUser) {
+      return <LoginPage onLogin={handleLogin} />;
+    }
+    return <ReviewWrapper matchId={route.matchId} currentUser={currentUser} onLogout={handleLogout} onRoleSwitch={handleRoleSwitch} />;
   }
 
   if (route.type === 'report') {
@@ -878,7 +1024,7 @@ function AppContent({ store, screen, setScreen, matchConfig, setMatchConfig, rev
 
     case "game_review":
       if (!reviewGame) { navigate("history"); return null; }
-      return <GameReviewScreen game={reviewGame} onDelete={handleDeleteGame} onBack={() => navigate("history")} onNavigate={navigate} currentUser={currentUser} />;
+      return <GameReviewScreen game={reviewGame} onDelete={handleDeleteGame} onBack={() => navigate("history")} onNavigate={navigate} currentUser={currentUser} onStartVideoReview={handleVideoReview} />;
 
     case "public_view":
       if (!reviewGame) { navigate("history"); return null; }

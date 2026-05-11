@@ -84,6 +84,15 @@ export async function getProfileByUsername(username) {
   return profile;
 }
 
+// Role hierarchy: admin sits above the others; among non-admins coach > commentator > supporter.
+// Used to pick the effective active role when a non-admin user has multiple roles assigned.
+export const ROLE_PRIORITY = { admin: 4, coach: 3, commentator: 2, supporter: 1 };
+
+export function highestRole(roles) {
+  if (!Array.isArray(roles) || roles.length === 0) return null;
+  return roles.slice().sort((a, b) => (ROLE_PRIORITY[b] || 0) - (ROLE_PRIORITY[a] || 0))[0];
+}
+
 // Create a new user (admin only)
 export async function createUser({ firstname, lastname, username, email, password, role, roles }) {
   // Pre-check: username uniqueness

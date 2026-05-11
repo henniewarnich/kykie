@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 
 const ROLE_META = {
   admin: { label: 'Admin', color: '#EF4444', route: '#/admin' },
-  commentator: { label: 'Commentator', color: '#10B981', route: '#/record' },
   coach: { label: 'Coach', color: '#8B5CF6', route: '#/coach' },
+  commentator: { label: 'Commentator', color: '#10B981', route: '#/record' },
+  supporter: { label: 'Supporter', color: '#3B82F6', route: '#/home' },
 };
 
 export default function RoleSwitcher({ currentUser, onSwitch }) {
@@ -20,8 +21,9 @@ export default function RoleSwitcher({ currentUser, onSwitch }) {
     return () => document.removeEventListener('click', close, true);
   }, [open]);
 
-  // Only show switcher if user has multiple roles
-  if (!roles || roles.length <= 1) {
+  // Only admins can switch roles. Everyone else sees a static role pill.
+  const hasAdmin = currentUser?.roles?.includes('admin');
+  if (!hasAdmin || !roles || roles.length <= 1) {
     return (
       <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 99, background: meta.color + "22", color: meta.color, fontWeight: 700 }}>
         {meta.label}

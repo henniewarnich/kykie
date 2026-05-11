@@ -1,5 +1,5 @@
 # kykie.net Hockey Stats PWA — Handoff Document
-**Version: 7.23.9 | Date: 11 May 2026**
+**Version: 7.24.1 | Date: 11 May 2026**
 
 ## Project Overview
 A Progressive Web App for live school hockey match stats, commentary, and analytics.
@@ -66,6 +66,21 @@ A Progressive Web App for live school hockey match stats, commentary, and analyt
 - **Gmail signature**: kykie-icon-dark.png + name + kykie.net
 
 ## Session Summary (11 May 2026)
+
+### Code Changes (v7.24.0 → v7.24.1)
+- **Role-switching restricted to admins** — only users with `admin` in their `roles[]` array can switch between roles via the RoleSwitcher. Everyone else now sees a static role pill (no dropdown).
+- **Highest-role default for non-admins** — if a non-admin user has multiple roles assigned, the active role on login/session restore is now forced to the highest one. Hierarchy (auth.js `ROLE_PRIORITY`): admin (4) > coach (3) > commentator (2) > supporter (1). Saved active-role state in sessionStorage is ignored for non-admins.
+- New helpers in `auth.js`: `ROLE_PRIORITY`, `highestRole(roles)`.
+
+### Code Changes (v7.23.9 → v7.24.0)
+- **Shareable match-review URL** — new route `#/review/{matchId}` opens a standalone Game Review screen with auth gating. Designed for admins to share a completed match with a commentator so the commentator can record video stats from a single tap.
+  - New `ReviewWrapper` component in App.jsx fetches the match + events, builds the game object, and renders `GameReviewScreen` with an `onStartVideoReview` callback that locks the match and switches to the live recorder in place.
+  - Game History 📤 Share button now targets `#/review/{matchId}` (was `#/match/{matchId}` which sent fans to the team page).
+- **GameReviewScreen role-aware actions** — admin-only actions (📦 JSON, ✏️ Edit, 🗑 Delete Match) are now hidden from commentators. Commentators viewing the screen see:
+  - 📹 Start Video Recording (only when the match has no recording yet) — triggers the same flow as the existing Video Stats button in History
+  - ⚠️ Report Issue (always) — links to the existing `#/issues` page so they can flag score problems back to admin
+  - 📺 Public / 🔒 Coach views remain available when the match has events to display
+- Per-event delete buttons remain admin-only (unchanged).
 
 ### Code Changes (v7.23.8 → v7.23.9)
 - **Team page upcoming match cards: Share button** — each upcoming match card on the team page (supporter and coach views) now has a small "📤 Share" button in the top-right alongside the countdown. Same shareMatchLink helper as everywhere else.

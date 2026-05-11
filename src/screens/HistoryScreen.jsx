@@ -46,9 +46,21 @@ export default function HistoryScreen({ games, currentUser, onSelect, onBack, on
     if (!matchId) { setShareToast('Cannot share — match not synced'); setTimeout(() => setShareToast(null), 2500); return; }
     const home = teamShortName(g.teams?.home) || 'Home';
     const away = teamShortName(g.teams?.away) || 'Away';
-    const res = await shareMatchLink(matchId, { title: `${home} vs ${away}`, text: `${home} vs ${away} on Kykie` });
-    if (res.ok && res.method === 'clipboard') { setShareToast('Link copied'); setTimeout(() => setShareToast(null), 2500); }
-    else if (!res.ok && res.error && res.error !== 'cancelled') { setShareToast(`Share failed: ${res.error}`); setTimeout(() => setShareToast(null), 3000); }
+    // Game History share targets the review URL so a commentator can pick
+    // up the recording — falls back to clipboard with a toast on desktop.
+    const url = `${window.location.origin}${window.location.pathname}#/review/${matchId}`;
+    const title = `${home} vs ${away}`;
+    const text = `Record video stats for ${home} vs ${away} on Kykie`;
+    try {
+      if (navigator.share) { await navigator.share({ title, text, url }); return; }
+      await navigator.clipboard.writeText(url);
+      setShareToast('Link copied');
+      setTimeout(() => setShareToast(null), 2500);
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
+      setShareToast(`Share failed: ${err?.message || 'unavailable'}`);
+      setTimeout(() => setShareToast(null), 3000);
+    }
   };
 
   const isApprentice = currentUser?.role === 'commentator' && currentUser?.commentator_status === 'apprentice';
