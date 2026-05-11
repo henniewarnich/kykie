@@ -1,5 +1,5 @@
 # kykie.net Hockey Stats PWA — Handoff Document
-**Version: 7.23.7 | Date: 11 May 2026**
+**Version: 7.23.9 | Date: 11 May 2026**
 
 ## Project Overview
 A Progressive Web App for live school hockey match stats, commentary, and analytics.
@@ -66,6 +66,13 @@ A Progressive Web App for live school hockey match stats, commentary, and analyt
 - **Gmail signature**: kykie-icon-dark.png + name + kykie.net
 
 ## Session Summary (11 May 2026)
+
+### Code Changes (v7.23.8 → v7.23.9)
+- **Team page upcoming match cards: Share button** — each upcoming match card on the team page (supporter and coach views) now has a small "📤 Share" button in the top-right alongside the countdown. Same shareMatchLink helper as everywhere else.
+- **Team page tab order** — swapped to Results | Upcoming (was Upcoming | Results). Default landing tab unchanged.
+
+### Code Changes (v7.23.7 → v7.23.8)
+- **Share button on landing-page upcoming matches** — when a logged-in or logged-out visitor expands an upcoming match on kykie.net's Upcoming tab, the expanded panel now starts with a "📤 Share match" button (top-right). Generates the canonical `#/match/{uuid}` link via the existing `shareMatchLink` helper. Toast confirms the clipboard copy.
 
 ### Code Changes (v7.23.6 → v7.23.7)
 - **Quick-score match detail view** — opening a match that was only recorded via quick score (no Live Pro events, `duration = 0`) previously showed a useless "Match Stats" panel of zeros plus a misleading "Clinical" insight (e.g. "4 goals from 0 shots on target"). TeamPage's selected-match view now detects this case and shows:

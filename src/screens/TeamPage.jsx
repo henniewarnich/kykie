@@ -897,16 +897,16 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
               background: tab === "overall" ? "#334155" : "#1E293B", color: tab === "overall" ? "#F8FAFC" : "#64748B",
             }}>Overall</button>
           )}
+          <button onClick={() => setTab("results")} style={{
+            flex: 1, padding: "9px 0", textAlign: "center", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
+            background: tab === "results" ? "#334155" : "#1E293B", color: tab === "results" ? "#F8FAFC" : "#64748B",
+          }}>{isCoach ? "Matches" : `Results (${matches.length})`}</button>
           {upcomingMatches.length > 0 && (
             <button onClick={() => setTab("upcoming")} style={{
               flex: 1, padding: "9px 0", textAlign: "center", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
               background: tab === "upcoming" ? "#F59E0B22" : "#1E293B", color: tab === "upcoming" ? "#F59E0B" : "#64748B",
             }}>Upcoming ({upcomingMatches.length})</button>
           )}
-          <button onClick={() => setTab("results")} style={{
-            flex: 1, padding: "9px 0", textAlign: "center", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
-            background: tab === "results" ? "#334155" : "#1E293B", color: tab === "results" ? "#F8FAFC" : "#64748B",
-          }}>{isCoach ? "Matches" : `Results (${matches.length})`}</button>
           {isCoach && (
             <button onClick={() => setTab("trends")} style={{
               flex: 1, padding: "9px 0", textAlign: "center", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
@@ -1152,7 +1152,7 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
               return (
                 <div key={m.id} style={{ background: "#1E293B", borderRadius: 10, padding: 12, marginBottom: 6, border: "1px solid #33415544" }}>
                   {/* Match header */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: isCoach ? 8 : 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: isCoach ? 8 : 6 }}>
                     <div style={{
                       width: 28, height: 28, borderRadius: 7, background: "#0B0F1A",
                       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0,
@@ -1169,7 +1169,13 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
                         {m.venue && ` @ ${m.venue}`}
                       </div>
                     </div>
-                    {countdown && <div style={{ fontSize: 9, fontWeight: 700, color: countdown.color, fontFamily: "monospace" }}>{countdown.text}</div>}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+                      {countdown && <div style={{ fontSize: 9, fontWeight: 700, color: countdown.color, fontFamily: "monospace" }}>{countdown.text}</div>}
+                      <button onClick={() => handleShareMatch(m)} title="Share match link"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 9, fontWeight: 700, color: "#94A3B8", background: "#0B0F1A", border: "1px solid #33415588", borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}>
+                        <Icon name="share" size={10} /> Share
+                      </button>
+                    </div>
                   </div>
                   {/* Coach scouting: prediction + side-by-side team stats */}
                   {isCoach && (() => {

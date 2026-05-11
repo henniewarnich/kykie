@@ -14,6 +14,8 @@ import CrowdDashboardPanel from '../components/CrowdDashboardPanel.jsx';
 import RoleSwitcher from '../components/RoleSwitcher.jsx';
 import { predictMatch } from '../utils/predict.js';
 import KykieSpinner from '../components/KykieSpinner.jsx';
+import { shareMatchLink } from '../utils/share.js';
+import Icon from '../components/Icons.jsx';
 import { teamDisplayName, teamInitial, teamMatchesSearch, teamShortName, teamSlug, teamColor, teamDerivedName, TEAM_SELECT, MATCH_HOME_TEAM, MATCH_AWAY_TEAM } from '../utils/teams.js';
 import FilterBar, { matchPassesFilter, teamPassesFilter } from '../components/FilterBar.jsx';
 import BottomNav from '../components/BottomNav.jsx';
@@ -51,6 +53,16 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
   const [pendingScoreMatches, setPendingScoreMatches] = useState([]); // crowd-submitted scores awaiting approval
   const [userPredictions, setUserPredictions] = useState({}); // match_id -> { prediction, correct, points }
   const [leaderboard, setLeaderboard] = useState(null); // [{ user_id, name, points, correct, total }]
+  const [shareToast, setShareToast] = useState(null);
+
+  const handleShareMatch = async (m, e) => {
+    if (e) e.stopPropagation();
+    const home = teamShortName(m.home_team) || 'Home';
+    const away = teamShortName(m.away_team) || 'Away';
+    const res = await shareMatchLink(m.id, { title: `${home} vs ${away}`, text: `Follow ${home} vs ${away} live on Kykie` });
+    if (res.ok && res.method === 'clipboard') { setShareToast('Link copied'); setTimeout(() => setShareToast(null), 2500); }
+    else if (!res.ok && res.error && res.error !== 'cancelled') { setShareToast(`Share failed: ${res.error}`); setTimeout(() => setShareToast(null), 3000); }
+  };
 
   // Tick every 30s for in-progress countdowns
   useEffect(() => {
@@ -764,6 +776,13 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
                         const pred = predictMatch(hRec, aRec, teamShortName(m.home_team), teamShortName(m.away_team), { homeRank: latestRankings[m.home_team?.id]?.rank, awayRank: latestRankings[m.away_team?.id]?.rank });
                         return (
                         <div style={{ background: "#1E293B", borderRadius: "0 0 10px 10px", padding: "6px 8px 8px", borderTop: "1px solid #33415544" }}>
+                          {/* Share match link */}
+                          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
+                            <button onClick={(e) => handleShareMatch(m, e)} title="Share match link"
+                              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 9, fontWeight: 700, color: "#94A3B8", background: "#0B0F1A", border: "1px solid #33415588", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>
+                              <Icon name="share" size={11} /> Share match
+                            </button>
+                          </div>
                           {/* Prediction */}
                           {pred && (() => {
                             const isDraw = pred.draw >= pred.homeWin && pred.draw >= pred.awayWin;
@@ -1154,6 +1173,9 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
 
       {/* Bottom Navigation */}
       <BottomNav active={activeTab} onChange={(tab) => { if (!onBack) window.location.hash = ''; setActiveTab(tab); }} liveBadge={liveMatches.length} />
+      {shareToast && (
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: '#10B981', color: '#0B0F1A', padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, zIndex: 100, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>{shareToast}</div>
+      )}
     </div>
   );
 }
