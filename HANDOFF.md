@@ -1,5 +1,5 @@
 # kykie.net Hockey Stats PWA — Handoff Document
-**Version: 7.24.2 | Date: 11 May 2026**
+**Version: 7.24.3 | Date: 14 May 2026**
 
 ## Project Overview
 A Progressive Web App for live school hockey match stats, commentary, and analytics.
@@ -66,6 +66,11 @@ A Progressive Web App for live school hockey match stats, commentary, and analyt
 - **Gmail signature**: kykie-icon-dark.png + name + kykie.net
 
 ## Session Summary (11 May 2026)
+
+### Code Changes (v7.24.2 → v7.24.3)
+- **TOP 10 benchmark now peer-scoped** — the Coach view's TOP 10 benchmark (per-match averages, aggregated stats, etc.) was previously the global top-10 ranked teams regardless of gender/age. Now restricted to teams sharing the same `gender`, `age_group` and `sport` as the team being viewed. So Paarl Girls 1st is benchmarked against the top 10 Girls 1st teams only; Paarl Boys 1st against the top 10 Boys 1st teams; etc.
+- Logic: take all ranked teams, filter to peer group (same gender + age_group + sport), then pick the top 10 by rank. Falls back to the original global top-10 if any of the team's metadata fields are missing.
+- **Column header updated** in `CoachOverall` from "Benchmark / TOP 10" to "Benchmark / TOP 10 · {Gender} {AgeGroup}" (e.g. "TOP 10 · Girls 1st") so the peer scope is visible to the user.
 
 ### Code Changes (v7.24.1 → v7.24.2)
 - **Game History share button — more visible.** Was a tiny 8px text "share" link. Now a proper purple-tinted button (10px text, share icon, padded with a coloured border), in line with the other share buttons in the app.

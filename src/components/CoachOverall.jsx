@@ -259,7 +259,7 @@ export default function CoachOverall({ matchStatsList, matchStatsMap, teamName, 
           <div />
           <div style={{ ...ST.hdr, color: teamColor }}>{abbr}</div>
           <div style={{ ...ST.hdr, color: "#94A3B8" }}>VS OPP</div>
-          <div style={{ ...ST.hdr, color: "#8B5CF6", lineHeight: 1.3 }}>Benchmark<br/><span style={{ fontSize: 7 }}>TOP 10</span></div>
+          <div style={{ ...ST.hdr, color: "#8B5CF6", lineHeight: 1.3 }}>Benchmark<br/><span style={{ fontSize: 7 }}>TOP 10{top10Label ? ` · ${top10Label}` : ''}</span></div>
         </div>
         {rows.map((r, i) => {
           const isExp = expanded[r.key];
@@ -317,7 +317,7 @@ export default function CoachOverall({ matchStatsList, matchStatsMap, teamName, 
           <div />
           <div style={{ ...ST.hdr, color: teamColor }}>{abbr}</div>
           <div style={{ ...ST.hdr, color: "#94A3B8" }}>VS OPP</div>
-          <div style={{ ...ST.hdr, color: "#8B5CF6", lineHeight: 1.3 }}>Benchmark<br/><span style={{ fontSize: 7 }}>TOP 10</span></div>
+          <div style={{ ...ST.hdr, color: "#8B5CF6", lineHeight: 1.3 }}>Benchmark<br/><span style={{ fontSize: 7 }}>TOP 10{top10Label ? ` · ${top10Label}` : ''}</span></div>
         </div>
         {[
           { label: "Goals For", tVal: gfPM, oVal: oppGF, t10Val: t10GF, higher: true, color: "#F59E0B" },

@@ -653,10 +653,31 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
     if (!isCoach || !team || Object.keys(latestRankings).length === 0) return;
     (async () => {
       try {
-        // Get top 10 team IDs (excluding current team)
-        const ranked = Object.entries(latestRankings)
-          .filter(([id, r]) => r.rank && r.rank <= 10)
-          .map(([id]) => id);
+        // Build a TOP 10 benchmark restricted to teams of the SAME gender,
+        // age group and sport as the current team — so e.g. Paarl Girls 1st
+        // is benchmarked against other Girls 1st teams only.
+        // Take ALL ranked teams (sorted by rank), filter to peer group, then
+        // pick the top 10 of those peers.
+        const allRanked = Object.entries(latestRankings)
+          .filter(([id, r]) => r.rank && id !== team.id)
+          .map(([id, r]) => ({ id, rank: r.rank }))
+          .sort((a, b) => a.rank - b.rank);
+        if (allRanked.length === 0) return;
+        let ranked;
+        if (team.gender && team.age_group && team.sport) {
+          const { data: peerTeams } = await supabase
+            .from('teams')
+            .select('id')
+            .in('id', allRanked.map(r => r.id))
+            .eq('gender', team.gender)
+            .eq('age_group', team.age_group)
+            .eq('sport', team.sport);
+          const peerIds = new Set((peerTeams || []).map(t => t.id));
+          ranked = allRanked.filter(r => peerIds.has(r.id)).slice(0, 10).map(r => r.id);
+        } else {
+          // Fall back to global top 10 if team metadata is incomplete
+          ranked = allRanked.slice(0, 10).map(r => r.id);
+        }
         if (ranked.length === 0) return;
 
         // Fetch ended matches for top 10 teams (with scores for per-match averages)
@@ -1092,6 +1113,12 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
             matchCount={matches.filter(m => m.duration > 0).length}
             top10Agg={top10Agg}
             top10PM={top10PM}
+            top10Label={(() => {
+              const parts = [];
+              if (team?.gender) parts.push(team.gender.charAt(0).toUpperCase() + team.gender.slice(1));
+              if (team?.age_group) parts.push(team.age_group);
+              return parts.join(' ');
+            })()}
             teamTier={teamTier}
           />
           </>
