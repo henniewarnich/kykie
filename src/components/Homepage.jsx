@@ -186,6 +186,9 @@ export default function Homepage({ currentUser, liveMatches, onNavigate }) {
         .kykie-lp h3 { font-size: 20px; font-weight: 900; color: #F8FAFC; margin-bottom: 8px; }
         .kykie-lp .lede { font-size: 13px; color: #94A3B8; line-height: 1.6; max-width: 380px; }
         .kykie-lp .btn-am { background: #F59E0B; color: #0B0F1A; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 800; display: inline-block; text-decoration: none; border: none; cursor: pointer; font-family: inherit; margin-top: 14px; }
+        .kykie-lp .quote { margin: 22px 0 0; padding: 14px 16px; background: rgba(245,158,11,0.06); border-left: 3px solid #F59E0B; border-radius: 0 8px 8px 0; max-width: 380px; }
+        .kykie-lp .quote .qtext { font-size: 13px; font-style: italic; color: #CBD5E1; line-height: 1.5; }
+        .kykie-lp .quote .qattr { font-size: 11px; font-weight: 700; color: #94A3B8; margin-top: 6px; letter-spacing: 0.5px; }
 
         /* Hero demo card */
         .kykie-lp .demo { background: #1E293B; border: 1px solid #334155; border-radius: 14px; padding: 16px; position: relative; }
@@ -350,6 +353,10 @@ export default function Homepage({ currentUser, liveMatches, onNavigate }) {
           <div className="eyebrow">After the whistle</div>
           <h3>The story in the numbers</h3>
           <p className="lede">Full tactical breakdown — ball movement, what worked, what fell short. Ready before you leave the field.</p>
+          <blockquote className="quote">
+            <div className="qtext">"The match reports are a game changer, because we can now measure ourselves."</div>
+            <div className="qattr">— Coach</div>
+          </blockquote>
         </div>
         <div className="rep">
           <div className="h">Ball movement DNA</div>
