@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../utils/supabase.js';
 import { APP_VERSION, PUBLIC_EVENTS } from '../utils/constants.js';
 import { ensureContrastingColors, parseSAST, parseSASTDate, matchOutcome, matchWinner } from '../utils/helpers.js';
-import { computeMatchStats, statsFromArchive, aggregateStats } from '../utils/stats.js';
+import { computeMatchStats, statsFromArchive, aggregateStats, computeStats as computeLiveStats } from '../utils/stats.js';
 import { getSession, getProfile, isCoachForTeam, signOut } from '../utils/auth.js';
 import { fetchLatestRankings } from '../utils/sync.js';
 import { useReactions } from '../hooks/useReactions.js';
@@ -191,6 +191,7 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
   const [coachProfile, setCoachProfile] = useState(null);
   const [tab, setTab] = useState("results");
   const [liveView, setLiveView] = useState("totals");
+  const [liveSubTab, setLiveSubTab] = useState("commentary"); // public live: 'commentary' | 'stats'
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [shareToast, setShareToast] = useState(null);
 
@@ -1015,9 +1016,67 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
               teamTier={teamTier}
             />
           ) : (
-            /* Public: Commentary */
+            /* Public: Commentary + Stats sub-tabs */
             <div style={{ flex: 1, padding: "0 14px 20px", overflowY: "auto" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Live Commentary</div>
+              <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", border: "1px solid #334155", marginBottom: 10 }}>
+                {[
+                  ["commentary", "Live Commentary"],
+                  ["stats", "Live Stats"],
+                ].map(([k, l]) => (
+                  <button key={k} onClick={() => setLiveSubTab(k)} style={{
+                    flex: 1, padding: "8px 0", textAlign: "center", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
+                    background: liveSubTab === k ? "#10B98122" : "#1E293B",
+                    color: liveSubTab === k ? "#10B981" : "#64748B",
+                  }}>{l}</button>
+                ))}
+              </div>
+
+              {liveSubTab === "stats" ? (() => {
+                const evs = liveEvents.map(e => ({ ...e, time: e.match_time }));
+                const h = computeLiveStats(evs, "home", 0, Infinity);
+                const a = computeLiveStats(evs, "away", 0, Infinity);
+                const totalPoss = h.territory + a.territory; // computeStats labels possession-% as `territory`
+                const hPoss = totalPoss > 0 ? Math.round(h.territory / totalPoss * 100) : 50;
+                const aPoss = 100 - hPoss;
+                const totalTerr = h.oppHalfPct + a.oppHalfPct;
+                const hTerr = totalTerr > 0 ? Math.round(h.oppHalfPct / totalTerr * 100) : 50;
+                const aTerr = 100 - hTerr;
+                const homeName = teamShortName(liveMatch.home_team);
+                const awayName = teamShortName(liveMatch.away_team);
+                const hCol = liveColors.homeColor || "#3B82F6";
+                const aCol = liveColors.awayColor || "#EF4444";
+                const Bar = ({ label, hVal, aVal, hSuffix = "%", aSuffix = "%" }) => (
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, textAlign: "center" }}>{label}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ minWidth: 44, textAlign: "right", fontWeight: 800, color: hCol, fontSize: 15 }}>{hVal}{hSuffix}</div>
+                      <div style={{ flex: 1, height: 14, borderRadius: 7, background: "#1E293B", overflow: "hidden", display: "flex" }}>
+                        <div style={{ width: `${hSuffix === "%" ? hVal : (hVal + aVal > 0 ? hVal / (hVal + aVal) * 100 : 50)}%`, background: hCol, transition: "width 0.4s" }} />
+                        <div style={{ flex: 1, background: aCol, transition: "width 0.4s" }} />
+                      </div>
+                      <div style={{ minWidth: 44, textAlign: "left", fontWeight: 800, color: aCol, fontSize: 15 }}>{aVal}{aSuffix}</div>
+                    </div>
+                  </div>
+                );
+                return (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 700, color: "#94A3B8", marginBottom: 12, padding: "0 4px" }}>
+                      <span style={{ color: hCol }}>{homeName}</span>
+                      <span style={{ color: aCol }}>{awayName}</span>
+                    </div>
+                    <Bar label="Possession" hVal={hPoss} aVal={aPoss} />
+                    <Bar label="Territory" hVal={hTerr} aVal={aTerr} />
+                    <Bar label="D Entries" hVal={h.dEntries} aVal={a.dEntries} hSuffix="" aSuffix="" />
+                    <Bar label="Short Corners" hVal={h.shortCorners} aVal={a.shortCorners} hSuffix="" aSuffix="" />
+                    {liveEvents.length === 0 && (
+                      <div style={{ fontSize: 13, color: "#94A3B8", fontStyle: "italic", textAlign: "center", padding: 20 }}>
+                        Waiting for kickoff...
+                      </div>
+                    )}
+                  </>
+                );
+              })() : (
+              <>
               {publicEvents.length === 0 ? (
                 <div style={{ fontSize: 13, color: "#94A3B8", fontStyle: "italic", textAlign: "center", padding: 20 }}>Waiting for kickoff...</div>
               ) : publicEvents.slice(0, 30).map((entry, i) => {
@@ -1066,6 +1125,8 @@ export default function TeamPage({ teamSlug, initialMatchId, onBack, currentUser
                   </div>
                 );
               })}
+              </>
+              )}
             </div>
           )}
         </div>
