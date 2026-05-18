@@ -248,8 +248,10 @@ export async function fetchMatchesForLocal() {
       supabase_id: m.id,
       date: m.match_date ? new Date(m.match_date).toISOString() : new Date(m.created_at).toISOString(),
       teams: {
-        home: { name: teamShortName(m.home_team) || "Home", color: m.home_team?.color || "#1D4ED8", id: m.home_team?.id, institution: m.home_team?.institution || null },
-        away: { name: teamShortName(m.away_team) || "Away", color: m.away_team?.color || "#DC2626", id: m.away_team?.id, institution: m.away_team?.institution || null },
+        // Preserve all team fields (gender, age_group, sport, variant, institution)
+        // so downstream display helpers can produce correct subtitles.
+        home: { ...m.home_team, name: teamShortName(m.home_team) || "Home", color: m.home_team?.color || "#1D4ED8" },
+        away: { ...m.away_team, name: teamShortName(m.away_team) || "Away", color: m.away_team?.color || "#DC2626" },
       },
       events: (events || []).map(e => ({
         id: e.id,

@@ -84,8 +84,11 @@ export default function HistoryScreen({ games, currentUser, onSelect, onBack, on
           supabase_id: m.id,
           date: m.match_date,
           teams: {
-            home: { name: teamShortName(m.home_team), displayName: teamDisplayName(m.home_team), color: m.home_team?.color, id: m.home_team?.id, short: teamShortName(m.home_team)?.slice(0, 3).toUpperCase(), instName: m.home_team?.institution?.name || '' },
-            away: { name: teamShortName(m.away_team), displayName: teamDisplayName(m.away_team), color: m.away_team?.color, id: m.away_team?.id, short: teamShortName(m.away_team)?.slice(0, 3).toUpperCase(), instName: m.away_team?.institution?.name || '' },
+            // Spread the full team row so downstream helpers (teamDerivedName,
+            // RankBadge etc) keep access to gender / age_group / sport /
+            // variant / institution. Then layer on the computed display fields.
+            home: { ...m.home_team, name: teamShortName(m.home_team), displayName: teamDisplayName(m.home_team), short: teamShortName(m.home_team)?.slice(0, 3).toUpperCase(), instName: m.home_team?.institution?.name || '' },
+            away: { ...m.away_team, name: teamShortName(m.away_team), displayName: teamDisplayName(m.away_team), short: teamShortName(m.away_team)?.slice(0, 3).toUpperCase(), instName: m.away_team?.institution?.name || '' },
           },
           homeScore: m.home_score,
           awayScore: m.away_score,

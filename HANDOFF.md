@@ -1,5 +1,5 @@
 # kykie.net Hockey Stats PWA — Handoff Document
-**Version: 7.24.7 | Date: 18 May 2026**
+**Version: 7.24.8 | Date: 18 May 2026**
 
 ## Project Overview
 A Progressive Web App for live school hockey match stats, commentary, and analytics.
@@ -66,6 +66,9 @@ A Progressive Web App for live school hockey match stats, commentary, and analyt
 - **Gmail signature**: kykie-icon-dark.png + name + kykie.net
 
 ## Session Summary (11 May 2026)
+
+### Code Changes (v7.24.7 → v7.24.8) — Hotfix
+- **Game History was stripping team metadata.** When fetching cloud matches, [HistoryScreen.jsx](src/screens/HistoryScreen.jsx) and [utils/sync.js](src/utils/sync.js) `fetchMatchesForLocal` were flattening each team to a small subset (`name`, `color`, `id`, `displayName`, `instName`) and **dropping `gender`, `age_group`, `sport`, `variant`, `institution`**. Downstream the display helpers (`teamDerivedName`) got a team without gender so subtitles read "Hockey 1st" regardless of actual gender — even though the DB rows had gender set correctly. The v7.24.7 fallback fix wasn't wrong; the data just wasn't being passed through. Now: both call sites spread the full team row before layering on computed display fields.
 
 ### Code Changes (v7.24.6 → v7.24.7)
 - **Tier override date picker now usable.** The "Expires" date input on the admin team tier-override popup had no visible calendar icon on the dark background (browser dropdown rendered black-on-dark). Added `color-scheme: dark` to the input plus a "Clear" button next to it so admins can easily remove the expiry to make the override permanent.
