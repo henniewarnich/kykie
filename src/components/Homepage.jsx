@@ -385,6 +385,14 @@ export default function Homepage({ currentUser, liveMatches, onNavigate }) {
           <div className="eyebrow">Sideline recording</div>
           <h3>Live Pro, no app install</h3>
           <p className="lede">Tap the field where the action happens. Tap the team strip for set pieces. Any player or student manager with a phone can record.</p>
+          <blockquote className="quote">
+            <div className="qtext">"I just love recording matches to produce insights for the team."</div>
+            <div className="qattr">— Isabelle, Grade 10</div>
+          </blockquote>
+          <blockquote className="quote">
+            <div className="qtext">"Now I can follow matches on my phone, even if I'm stuck in meetings!"</div>
+            <div className="qattr">— Henri, Parent</div>
+          </blockquote>
         </div>
         <div className="lp">
           <div className="sb">
