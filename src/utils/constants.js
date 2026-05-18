@@ -1,4 +1,4 @@
-export const APP_VERSION = "7.24.18";
+export const APP_VERSION = "7.24.19";
 
 export const ZONES = [
   { id: "opp_quarter", label: "Opp Quarter" },

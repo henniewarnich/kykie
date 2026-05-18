@@ -7,8 +7,7 @@ export default function PageHeader({ currentUser, onLogout, onRoleSwitch, onBack
       borderBottom: '1px solid #1E293B',
     }}>
     <div style={{
-      maxWidth: 430, margin: '0 auto',
-      padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     }}>
       {/* Left: back + logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
