@@ -394,7 +394,7 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
             </button>
           ) : (
             <button onClick={() => {
-              if (confirm("Cancel this match? It will revert to upcoming.")) handleCancelLive({ id: activeMatch.supabaseId, locked_by: currentUser.id });
+              if (confirm("Cancel & Revert this match?\n\nAll commentary, events and scores recorded so far will be permanently deleted. The match goes back to 'upcoming' so it can be started fresh.\n\nContinue?")) handleCancelLive({ id: activeMatch.supabaseId, locked_by: currentUser.id });
             }} style={{ background: "none", border: "none", color: "#EF4444", fontSize: 10, cursor: "pointer", fontWeight: 700 }}>
               ✕ Cancel & Revert
             </button>
@@ -745,7 +745,7 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
                   ) : isLive && isMyLock ? (
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={() => handleResumeLive(m)} style={{ flex: 1, padding: 6, borderRadius: 6, fontSize: 10, fontWeight: 700, border: "none", background: "#10B981", color: "#fff", cursor: "pointer" }}>🏑 Continue Recording</button>
-                      <button onClick={() => { if (confirm("Cancel? Reverts to upcoming.")) handleCancelLive(m); }} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: "1px solid #EF444444", background: "transparent", color: "#EF4444", cursor: "pointer" }}>✕</button>
+                      <button onClick={() => { if (confirm("Cancel & Revert?\n\nAll commentary, events and scores so far will be permanently deleted and the match goes back to 'upcoming'.\n\nContinue?")) handleCancelLive(m); }} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 10, fontWeight: 700, border: "1px solid #EF444444", background: "transparent", color: "#EF4444", cursor: "pointer" }}>✕</button>
                     </div>
                   ) : isLive ? (
                     <div style={{ fontSize: 9, color: "#EF4444" }}>🔒 Started by another user</div>

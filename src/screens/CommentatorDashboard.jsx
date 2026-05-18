@@ -227,7 +227,7 @@ export default function CommentatorDashboard({ currentUser, onLogout, onRoleSwit
             </button>
           ) : (
             <button onClick={() => {
-              if (confirm("Cancel this match? It will revert to upcoming.")) {
+              if (confirm("Cancel & Revert this match?\n\nAll commentary, events and scores recorded so far will be permanently deleted. The match goes back to 'upcoming' so it can be started fresh.\n\nContinue?")) {
                 handleCancelLive({ id: activeMatch.supabaseId, locked_by: currentUser.id });
               }
             }} style={{ background: "none", border: "none", color: "#EF4444", fontSize: 10, cursor: "pointer", fontWeight: 700 }}>

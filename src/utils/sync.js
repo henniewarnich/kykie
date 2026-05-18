@@ -653,13 +653,20 @@ export async function lockMatch(matchId, userId) {
 }
 
 export async function unlockMatch(matchId, userId) {
+  // Cancel & Revert: wipe the live attempt entirely so a restart starts clean.
+  // - delete all match_events for this match (stale commentary would otherwise
+  //   leak into the next attempt on the same share link)
+  // - reset scores and duration to 0
+  // - flip status back to 'upcoming' and clear the lock
   const { error } = await supabase
     .from('matches')
-    .update({ locked_by: null, status: 'upcoming' })
+    .update({ locked_by: null, status: 'upcoming', home_score: 0, away_score: 0, duration: 0 })
     .eq('id', matchId)
     .eq('locked_by', userId);
-  if (!error) await logAudit('match_unlock', 'match', matchId);
-  return !error;
+  if (error) return false;
+  await supabase.from('match_events').delete().eq('match_id', matchId);
+  await logAudit('match_unlock', 'match', matchId);
+  return true;
 }
 
 // ── VIDEO REVIEW ──
