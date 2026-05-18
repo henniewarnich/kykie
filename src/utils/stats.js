@@ -24,6 +24,10 @@ export function computeStats(events, team, startTime, endTime) {
     e.team === team && e.time >= startTime && e.time <= endTime &&
     e.team !== "commentary" && e.team !== "meta"
   );
+  const oppTeam = team === "home" ? "away" : "home";
+  const oppEvents = events.filter(e =>
+    e.team === oppTeam && e.time >= startTime && e.time <= endTime
+  );
 
   // Time-based possession & territory
   const allReal = events.filter(e =>
@@ -42,11 +46,22 @@ export function computeStats(events, team, startTime, endTime) {
     if (dur > 300) continue; // skip gaps > 5min (pauses)
     totalTime += dur;
     if (cur.team === team) possTime += dur;
-    // Territory: where the ball IS, regardless of who has it
+    // Territory: where the ball physically IS, regardless of who has it.
+    // Zone strings come in two flavours:
+    //   (a) Perspective-based: "Opp …" (top half) and "Own …" (bottom half)
+    //       — these are written from the HOME team's view of the pitch.
+    //   (b) Team-name-based: "<TeamName> D" — names the team whose D it is.
+    // The recorder only logs D-zone events from the attacker's hand, so the
+    // event's `team` field tells us whose D it is: event.team === "home"
+    // means home is attacking, so the D is the AWAY team's D, i.e. home
+    // attacking territory. Inverse for away. This avoids the prior bug
+    // where `z.includes(" D")` double-credited both sides whenever the
+    // ball was in any D.
     const z = cur.zone || "";
+    const isD = z.includes(" D");
     const ballInTeamAttackHalf = team === "home"
-      ? (z.startsWith("Opp ") || z.includes(" D"))
-      : (z.startsWith("Own ") || z.includes(" D"));
+      ? (z.startsWith("Opp ") || (isD && cur.team === "home"))
+      : (z.startsWith("Own ") || (isD && cur.team === "away"));
     if (ballInTeamAttackHalf && !z.includes("Centre")) {
       terrTime += dur;
     }
@@ -54,6 +69,21 @@ export function computeStats(events, team, startTime, endTime) {
 
   const possession = totalTime > 0 ? Math.round(possTime / totalTime * 100) : 0;
   const oppHalfPct = totalTime > 0 ? Math.round(terrTime / totalTime * 100) : 0;
+
+  // Possession Lost = every event where this team gave up the ball:
+  //   - own "Poss Conceded" (and "Poss Conceded (LC)") events
+  //   - own "Sideline Out (...)" events
+  //   - opponent's "Turnover Won" events (they took the ball off us)
+  // The first two are how the recorder logs *self*-conceded turnovers;
+  // the third is how the recorder logs *opponent-initiated* turnovers
+  // (ball tap by the other team) — that path doesn't write a Poss
+  // Conceded row, so it must be picked up from the opp side.
+  const ownConceded = real.filter(e =>
+    (e.event && e.event.startsWith("Poss Conceded")) ||
+    (e.event && e.event.startsWith("Sideline Out"))
+  ).length;
+  const oppTurnovers = oppEvents.filter(e => e.event === "Turnover Won").length;
+  const possLost = ownConceded + oppTurnovers;
 
   return {
     goals: real.filter(e => e.event?.startsWith("Goal!")).length,
@@ -66,7 +96,7 @@ export function computeStats(events, team, startTime, endTime) {
     shortCorners: real.filter(e => e.event === "Short Corner").length,
     longCorners: real.filter(e => e.event === "Long Corner").length,
     turnoversWon: real.filter(e => e.event === "Turnover Won").length,
-    possLost: real.filter(e => e.event === "Poss Conceded" || e.event?.startsWith("Sideline Out")).length,
+    possLost,
     territory: possession,
     oppHalfPct,
   };

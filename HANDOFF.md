@@ -1,5 +1,5 @@
 # kykie.net Hockey Stats PWA — Handoff Document
-**Version: 7.24.4 | Date: 14 May 2026**
+**Version: 7.24.5 | Date: 18 May 2026**
 
 ## Project Overview
 A Progressive Web App for live school hockey match stats, commentary, and analytics.
@@ -66,6 +66,17 @@ A Progressive Web App for live school hockey match stats, commentary, and analyt
 - **Gmail signature**: kykie-icon-dark.png + name + kykie.net
 
 ## Session Summary (11 May 2026)
+
+### Code Changes (v7.24.4 → v7.24.5)
+Two stat-correctness bugs fixed in [src/utils/stats.js](src/utils/stats.js) following an end-to-end audit comparing the in-app coach stats with the external Python match-analysis pipeline.
+- **Territory was double-counting D-zone time.** The old check `z.includes(" D")` matched any team's D, so any interval where the ball was in any D was credited as attacking territory for BOTH home and away simultaneously. In matches with heavy D play this inflated both sides' territory percentages and the home/away total exceeded 100%. Fixed by using the event's `team` field as the attacker proxy — in a D zone, the firing team is always the attacker (the recorder doesn't log defender-initiated D events), so we credit territory to whichever side fired the event.
+- **Possession Lost was undercounted.** The old formula only summed the team's own `Poss Conceded` + `Sideline Out` events. It missed (a) the `Poss Conceded (LC)` variant (exact-string match), and (b) the opponent's `Turnover Won` events (the recorder's "ball tap" workflow writes only a Turnover Won on the opponent's side, no Poss Conceded on ours). New formula: `own Poss Conceded* + own Sideline Out* + opponent's Turnover Won`. Catches all three recorder workflows.
+
+External Python analysis script (`analyse_match.py`) and its companion reference doc (`kykie-match-analysis-reference.md`) need to be aligned to this corrected logic separately — they don't live in this repo. Action items there:
+  - Use the same Territory rule (event.team as attacker proxy in D zones, not name-matching) so script + app agree even before the script knows the team names.
+  - Match the new Possession Lost formula (add own Sideline Out; the script already adds opponent's Turnover Won and Poss Conceded variants).
+  - Decide whether to align the Python "Attack Chances" naïve zone counter to the JS sequential 6-rule analyser (`computeAtkChances`) — JS is more meaningful but produces lower numbers than today's Python output.
+  - Decide whether to bring Ball Movement DNA and Overheads count into the Coach view (currently only in the Python report).
 
 ### Code Changes (v7.24.3 → v7.24.4)
 - **Peer-grouped rankings throughout the app.** `fetchLatestRankings` in [utils/sync.js](src/utils/sync.js) now returns each team's rank computed within its peer group (same sport + gender + age_group), not its global cross-demographic position. Today's data is all Girls 1st hockey so the surface change is nil, but the moment Boys 1st / U16 / other brackets get ranked, every `RankBadge`, prediction-input rank, and ranking-based insight automatically scopes correctly. Teams with missing demographic metadata fall back to their global position so nothing breaks.
