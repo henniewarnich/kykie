@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { theme } from '../utils/styles.js';
 import { teamColor, teamInitial, teamShortName } from '../utils/teams.js';
 import { FREE_PLUS_THRESHOLD } from '../utils/credits.js';
+import { computeStats } from '../utils/stats.js';
 
 import PlayPatternField from '../components/PlayPatternField.jsx';
 
@@ -190,62 +191,6 @@ function generateMatchInsights(quarterData, teams, homeScore, awayScore) {
   };
 }
 
-// Compute stats from events for a given time range
-function computeStats(events, team, startTime, endTime) {
-  const real = events.filter(e =>
-    e.team === team && e.time >= startTime && e.time <= endTime &&
-    e.team !== "commentary" && e.team !== "meta"
-  );
-
-  // Time-based possession & territory
-  // Sort all real events (both teams) in this time range
-  const allReal = events.filter(e =>
-    (e.team === "home" || e.team === "away") &&
-    e.time >= startTime && e.time <= endTime
-  ).sort((a, b) => a.time - b.time);
-
-  let possTime = 0;   // seconds this team had possession
-  let terrTime = 0;   // seconds ball was in this team's attacking half
-  let totalTime = 0;  // total tracked time
-
-  for (let i = 0; i < allReal.length; i++) {
-    const cur = allReal[i];
-    const nextTime = i < allReal.length - 1 ? allReal[i + 1].time : endTime;
-    const dur = Math.max(0, Math.min(nextTime, endTime) - cur.time);
-    if (dur > 300) continue; // skip gaps > 5min (pauses)
-    totalTime += dur;
-    if (cur.team === team) possTime += dur;
-    // Territory: where the ball IS, regardless of who has it
-    // Zone labels are ALWAYS from home perspective:
-    //   "Opp" = top half (home attacking), "Own" = bottom half (away attacking)
-    const z = cur.zone || "";
-    const ballInTeamAttackHalf = team === "home"
-      ? (z.startsWith("Opp ") || z.includes(" D"))
-      : (z.startsWith("Own ") || z.includes(" D"));
-    if (ballInTeamAttackHalf && !z.includes("Centre")) {
-      terrTime += dur;
-    }
-  }
-
-  const possession = totalTime > 0 ? Math.round(possTime / totalTime * 100) : 0;
-  // Territory: time in opp half as % of total time (not just this team's time)
-  const oppHalfPct = totalTime > 0 ? Math.round(terrTime / totalTime * 100) : 0;
-
-  return {
-    goals: real.filter(e => e.event?.startsWith("Goal!")).length,
-    scGoals: real.filter(e => e.event === "Goal! (SC)").length,
-    dEntries: real.filter(e => e.event === "D Entry").length,
-    atkZoneEntries: real.filter(e => e.zone?.includes("Opp Quarter")).length,
-    shotsOn: real.filter(e => e.event === "Shot on Goal").length,
-    shotsOff: real.filter(e => e.event === "Shot Off Target").length,
-    shortCorners: real.filter(e => e.event === "Short Corner").length,
-    longCorners: real.filter(e => e.event === "Long Corner").length,
-    turnoversWon: real.filter(e => e.event === "Turnover Won").length,
-    possLost: real.filter(e => e.event === "Poss Conceded" || e.event?.startsWith("Sideline Out")).length,
-    territory: possession,
-    oppHalfPct,
-  };
-}
 
 // Find quarter boundaries from pause events (real quarters) or time-based (halves/none)
 function getQuarters(events, breakFormat, matchLength, matchTime) {
