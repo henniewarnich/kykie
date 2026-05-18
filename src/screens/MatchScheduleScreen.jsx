@@ -270,8 +270,8 @@ export default function MatchScheduleScreen({ onBack, currentUser }) {
   };
 
   const DEMO_CONFIG = {
-    home: { name: "Demo Lions", color: "#1D4ED8", id: "demo-home", short: "DLI" },
-    away: { name: "Demo Eagles", color: "#DC2626", id: "demo-away", short: "DEA" },
+    home: { id: "demo-home", color: "#1D4ED8", short_name: "Demo Lions", sport: "Hockey", age_group: "1st" },
+    away: { id: "demo-away", color: "#DC2626", short_name: "Demo Eagles", sport: "Hockey", age_group: "1st" },
     matchLength: 10, breakFormat: "none", venue: "Demo Pitch",
     date: new Date().toISOString().slice(0, 10), isDemo: true,
   };

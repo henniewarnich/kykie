@@ -389,7 +389,7 @@ function DemoSetup({ onStart, onBack }) {
           <div style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>Demo Lions 🔵 vs Demo Eagles 🔴</div>
           <div style={{ fontSize: 11, color: theme.textDim, marginBottom: 24 }}>10 minute match · No breaks · Data discarded on exit</div>
           <button style={S.btn(theme.accent, theme.bg)} onClick={() => {
-            onStart({ home: { name: "Demo Lions", color: "#1D4ED8", id: "demo-home" }, away: { name: "Demo Eagles", color: "#DC2626", id: "demo-away" }, matchLength: 10, breakFormat: "none", venue: "Demo Pitch", date: new Date().toISOString().slice(0, 10), isDemo: true });
+            onStart({ home: { id: "demo-home", color: "#1D4ED8", short_name: "Demo Lions", sport: "Hockey", age_group: "1st" }, away: { id: "demo-away", color: "#DC2626", short_name: "Demo Eagles", sport: "Hockey", age_group: "1st" }, matchLength: 10, breakFormat: "none", venue: "Demo Pitch", date: new Date().toISOString().slice(0, 10), isDemo: true });
           }}>🏑 Start Demo</button>
         </div>
       </div>
