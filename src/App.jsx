@@ -673,7 +673,7 @@ export default function App() {
   // Scores tab so "Browse Matches" actually shows matches, not the marketing home.
   if (route.type === 'browse') {
     return <LandingPage currentUser={currentUser} onLogout={handleLogout} emailConfirmed={emailConfirmed}
-      initialTab="scores"
+      initialTab="scores" initialScoresSub="results"
       onNavigate={currentUser ? (target) => setSubScreen(target) : null}
       onRoleSwitch={handleRoleSwitch}
       onBack={() => { window.location.hash = currentUser ? getHomeHash(currentUser) : ''; }} />;

@@ -24,7 +24,7 @@ import MoreMenu from '../components/MoreMenu.jsx';
 
 import PageHeader from '../components/PageHeader.jsx';
 
-export default function LandingPage({ currentUser, onLogout, emailConfirmed, initialTab, onNavigate, onRoleSwitch, onBack }) {
+export default function LandingPage({ currentUser, onLogout, emailConfirmed, initialTab, initialScoresSub, onNavigate, onRoleSwitch, onBack }) {
   const [teams, setTeams] = useState([]);
   const [matches, setMatches] = useState([]);
   const [liveMatches, setLiveMatches] = useState([]);
@@ -34,7 +34,7 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
   const [visitorCount, setVisitorCount] = useState(0);
   const [liveMatchViewers, setLiveMatchViewers] = useState({});
   const [activeTab, setActiveTab] = useState(initialTab || 'home');
-  const [scoresSub, setScoresSub] = useState('live'); // live | upcoming | results
+  const [scoresSub, setScoresSub] = useState(initialScoresSub || 'live'); // live | upcoming | results
   const [filters, setFilters] = useState({ sport: 'Hockey', gender: null, age: null });
   const [latestRankings, setLatestRankings] = useState({});
   const [showUpcoming, setShowUpcoming] = useState(20);
