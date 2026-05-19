@@ -2,7 +2,7 @@ import Icon from './Icons.jsx';
 
 const tabs = [
   { id: 'home', icon: 'home', label: 'Home' },
-  { id: 'scores', icon: 'scoreboard', label: 'Scores' },
+  { id: 'scores', icon: 'scoreboard', label: 'Matches' },
   { id: 'teams', icon: 'teams', label: 'Teams' },
   { id: 'rankings', icon: 'trophy', label: 'Rankings' },
   { id: 'more', icon: 'more_dots', label: 'More' },

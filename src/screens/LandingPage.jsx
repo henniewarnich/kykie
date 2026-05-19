@@ -257,9 +257,11 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
           }
         })();
 
-        // Auto-select best scores sub-tab (only when the caller didn't pin one).
+        // Auto-select best scores sub-tab (only when the caller didn't pin one
+        // and the user is logged in — non-logged-in visitors land on Results).
         if (!initialScoresSub) {
-          if (live && live.length > 0) setScoresSub("live");
+          if (!currentUser) setScoresSub("results");
+          else if (live && live.length > 0) setScoresSub("live");
           else if (upcoming && upcoming.length > 0) setScoresSub("upcoming");
           else setScoresSub("results");
         }
