@@ -1,7 +1,7 @@
 {
   "name": "kykie",
   "private": true,
-  "version": "7.24.23",
+  "version": "7.24.24",
   "type": "module",
   "scripts": {
     "dev": "vite",

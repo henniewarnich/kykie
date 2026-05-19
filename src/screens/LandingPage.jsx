@@ -257,10 +257,12 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
           }
         })();
 
-        // Auto-select best scores sub-tab
-        if (live && live.length > 0) setScoresSub("live");
-        else if (upcoming && upcoming.length > 0) setScoresSub("upcoming");
-        else setScoresSub("results");
+        // Auto-select best scores sub-tab (only when the caller didn't pin one).
+        if (!initialScoresSub) {
+          if (live && live.length > 0) setScoresSub("live");
+          else if (upcoming && upcoming.length > 0) setScoresSub("upcoming");
+          else setScoresSub("results");
+        }
       } catch (err) { console.error('Landing load error:', err); }
       setLoading(false);
     };
@@ -455,7 +457,7 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
 
       {/* Search + filters (for scores and teams tabs) */}
       {(activeTab === "scores" || activeTab === "teams") && (
-      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0B0F1A", padding: "8px 16px" }}>
+      <div style={{ position: "sticky", top: 49, zIndex: 20, background: "#0B0F1A", padding: "8px 16px" }}>
         {activeTab === "scores" && (
           <div style={{ display: "flex", gap: 0, justifyContent: "center", borderRadius: 8, overflow: "hidden", border: "1px solid #334155", marginBottom: 8 }}>
             {[
