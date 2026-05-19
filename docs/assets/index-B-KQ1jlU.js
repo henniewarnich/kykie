@@ -66,10 +66,10 @@ The match result and scores will be kept.`)){s(!0);try{await X.from(`match_event
         .tvs .live-pill .d { width: 6px; height: 6px; background: #10B981; border-radius: 50%; animation: tvsPulse 1.5s infinite; }
         @keyframes tvsPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        .tvs .phones { display: grid; grid-template-columns: 1fr; gap: 32px; max-width: 260px; margin: 0 auto; align-items: start; }
-        @media (min-width: 700px) { .tvs .phones { grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 800px; } }
+        .tvs .phones { display: grid; grid-template-columns: 240px; gap: 32px; margin: 0 auto; justify-content: center; align-items: start; }
+        @media (min-width: 700px) { .tvs .phones { grid-template-columns: repeat(3, 240px); gap: 20px; } }
         .tvs .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-        .tvs .phone { width: 100%; max-width: 240px; background: #000; border: 3px solid #1E293B; border-radius: 32px; padding: 26px 8px 12px; position: relative; aspect-ratio: 9/16; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .tvs .phone { width: 240px; height: 427px; background: #000; border: 3px solid #1E293B; border-radius: 32px; padding: 26px 8px 12px; position: relative; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         .tvs .notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 60px; height: 7px; background: #1E293B; border-radius: 4px; z-index: 2; }
         .tvs .scr { background: #0B0F1A; border-radius: 18px; height: 100%; overflow: hidden; display: flex; flex-direction: column; padding: 8px 6px; }
         .tvs .phone-label { font-size: 13px; font-weight: 800; color: #F8FAFC; letter-spacing: 0.5px; text-align: center; }
