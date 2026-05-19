@@ -669,9 +669,11 @@ export default function App() {
     return <SupporterDashboard currentUser={currentUser} onLogout={handleLogout} onRoleSwitch={handleRoleSwitch} />;
   }
 
-  // Browse mode — LandingPage with back to role dashboard
+  // Browse mode — LandingPage with back to role dashboard. Default to the
+  // Scores tab so "Browse Matches" actually shows matches, not the marketing home.
   if (route.type === 'browse') {
     return <LandingPage currentUser={currentUser} onLogout={handleLogout} emailConfirmed={emailConfirmed}
+      initialTab="scores"
       onNavigate={currentUser ? (target) => setSubScreen(target) : null}
       onRoleSwitch={handleRoleSwitch}
       onBack={() => { window.location.hash = currentUser ? getHomeHash(currentUser) : ''; }} />;

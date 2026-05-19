@@ -33,7 +33,7 @@ export default function LandingPage({ currentUser, onLogout, emailConfirmed, ini
   const [loading, setLoading] = useState(true);
   const [visitorCount, setVisitorCount] = useState(0);
   const [liveMatchViewers, setLiveMatchViewers] = useState({});
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(initialTab || 'home');
   const [scoresSub, setScoresSub] = useState('live'); // live | upcoming | results
   const [filters, setFilters] = useState({ sport: 'Hockey', gender: null, age: null });
   const [latestRankings, setLatestRankings] = useState({});
