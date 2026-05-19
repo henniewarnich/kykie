@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../utils/supabase.js';
 import { MATCH_HOME_TEAM, MATCH_AWAY_TEAM, teamShortName, teamColor, teamDisplayName, teamSlug } from '../utils/teams.js';
 import { parseSASTDate } from '../utils/helpers.js';
+import ThreeViewShowcase from './landing/ThreeViewShowcase.jsx';
 
 const CACHE_KEY = 'kykie-homepage-v7';
 const CACHE_TTL = 5 * 60 * 1000;
@@ -504,6 +505,9 @@ export default function Homepage({ currentUser, liveMatches, onNavigate }) {
           </svg>
         </div>
       </section>
+
+      {/* THREE-VIEW SHOWCASE — one play, three perspectives */}
+      <ThreeViewShowcase />
 
       {/* AI SCOUT */}
       {featuredTeam && (() => {
