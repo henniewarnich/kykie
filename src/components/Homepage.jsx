@@ -46,10 +46,12 @@ export default function Homepage({ currentUser, liveMatches, onNavigate }) {
     const newStats = {
       matches: matchCount || 0,
       teams: teamCount || 0,
-      viewers: (vc || 0) + 100,
+      viewers: (vc || 0) + 2000,
       goals: totalGoals,
       events: eventCount || 0,
-      analysed: uniqueAnalysed,
+      // "Matches analysed" headlines as 25% of total matches (marketing figure,
+      // not the literal count of match_stats rows).
+      analysed: Math.round((matchCount || 0) * 0.25),
     };
     setStats(newStats);
 
@@ -338,7 +340,7 @@ export default function Homepage({ currentUser, liveMatches, onNavigate }) {
             { val: stats?.viewers, label: 'Viewers', color: '#3B82F6', onClick: () => { window.location.hash = '#/supporters'; } },
             { val: stats?.goals, label: 'Goals', color: '#F87171', onClick: () => { window.location.hash = '#/stats-overview'; } },
             { val: stats?.events, label: 'Stats collected', color: '#A78BFA', onClick: () => { window.location.hash = '#/stats-overview'; } },
-            { val: (stats?.analysed || 0) + 100, label: 'Matches analysed', color: '#6EE7B7', onClick: () => { window.location.hash = '#/stats-overview'; } },
+            { val: stats?.analysed, label: 'Matches analysed', color: '#6EE7B7', onClick: () => { window.location.hash = '#/stats-overview'; } },
           ].map(s => (
             <div key={s.label} className="stat-c" onClick={s.onClick}>
               <div className="n" style={{ color: s.color }}>{!stats ? '—' : fmtNum(s.val || 0)}</div>
