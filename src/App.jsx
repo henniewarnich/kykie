@@ -44,10 +44,12 @@ import AdminCreditsScreen from './screens/AdminCreditsScreen.jsx';
 import SecurityScreen from './screens/SecurityScreen.jsx';
 import ReportScreen from './screens/ReportScreen.jsx';
 import NotifyCoachesScreen from './screens/NotifyCoachesScreen.jsx';
+import VisitorsScreen from './screens/VisitorsScreen.jsx';
 import DeviceVerification from './components/DeviceVerification.jsx';
 import PageHeader from './components/PageHeader.jsx';
 import { KykieLoadingScreen } from './components/KykieSpinner.jsx';
 import { checkDevice, getDeviceId } from './utils/devices.js';
+import { logVisit } from './utils/visitLog.js';
 import CoachInfoScreen from './screens/CoachInfoScreen.jsx';
 import CommentatorInfoScreen from './screens/CommentatorInfoScreen.jsx';
 import SupporterInfoScreen from './screens/SupporterInfoScreen.jsx';
@@ -298,6 +300,13 @@ export default function App() {
     window.addEventListener('hashchange', handler);
     return () => window.removeEventListener('hashchange', handler);
   }, []);
+
+  // First-party visit log — one row per pageload / hash change. logVisit
+  // dedupes same-path bounces internally so this is safe to fire on every
+  // route or user change. user_id is null for anonymous visitors.
+  useEffect(() => {
+    logVisit(window.location.hash, currentUser?.id || null);
+  }, [route, currentUser?.id]);
 
   // Redirect logged-in users away from public landing page
   useEffect(() => {
@@ -955,6 +964,9 @@ function AppContent({ store, screen, setScreen, matchConfig, setMatchConfig, rev
 
     case "notify_coaches":
       return <NotifyCoachesScreen currentUser={currentUser} onBack={() => navigate("home")} />;
+
+    case "visitors":
+      return <VisitorsScreen onBack={() => navigate("home")} />;
 
     case "sponsors":
       return <SponsorManagementScreen onBack={() => navigate("home")} />;
