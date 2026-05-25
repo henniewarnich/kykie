@@ -42,6 +42,19 @@ export function useMatchStore() {
     }).catch(() => {});
   }, []);
 
+  // When a sync self-heals a local-only team id, remap the local team record
+  // to the cloud UUID so the next match (and the team picker) use the right id.
+  const applyTeamIdRemap = useCallback((remap) => {
+    if (!remap || Object.keys(remap).length === 0) return;
+    setTeams(prev => {
+      const updated = prev.map(t =>
+        remap[t.id] ? { ...t, id: remap[t.id], supabase_id: remap[t.id] } : t
+      );
+      saveData(TEAMS_KEY, updated);
+      return updated;
+    });
+  }, []);
+
   // Team CRUD — local first, then sync
   const saveTeam = useCallback((team) => {
     // Optimistic local update. Identity comes from id + institution; no name field.
@@ -68,8 +81,16 @@ export function useMatchStore() {
           saveData(TEAMS_KEY, updated);
           return updated;
         });
+      } else {
+        // upsertTeam returned null — a Supabase error was logged inside it but
+        // the team is now stranded with a local-only id. Surface it so the user
+        // knows to retry; otherwise the next match against this team can't sync.
+        setLastSyncError('Team saved locally but cloud sync failed. Open Teams and re-save before recording.');
       }
-    }).catch(() => {});
+    }).catch(err => {
+      console.warn('Team upsert failed:', err);
+      setLastSyncError('Team save failed: ' + (err?.message || 'unknown error'));
+    });
   }, []);
 
   const deleteTeam = useCallback((id) => {
@@ -99,6 +120,7 @@ export function useMatchStore() {
     saveMatchToSupabase(game).then(remote => {
       setSyncing(false);
       if (remote) {
+        applyTeamIdRemap(remote._teamIdRemap);
         // Store Supabase match ID on the local game
         setGames(prev => {
           const updated = prev.map(g =>
@@ -167,6 +189,7 @@ export function useMatchStore() {
       try {
         const remote = await saveMatchToSupabase(game);
         if (remote) {
+          applyTeamIdRemap(remote._teamIdRemap);
           setGames(prev => {
             const updated = prev.map(g => g.id === game.id ? { ...g, supabase_id: remote.id } : g);
             saveUnsyncedGames(updated);
@@ -176,7 +199,8 @@ export function useMatchStore() {
         } else {
           failed++;
         }
-      } catch {
+      } catch (err) {
+        console.warn('Sync game failed:', err);
         failed++;
       }
     }

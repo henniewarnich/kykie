@@ -139,6 +139,16 @@ export async function saveMatchToSupabase(game) {
   const awayTeam = await findOrCreateTeam(game.teams.away);
   if (!homeTeam || !awayTeam) return null;
 
+  // If a self-heal swapped a local-only team id for a cloud UUID, surface that
+  // back to the caller so local team state can be reconciled in one place.
+  const teamIdRemap = {};
+  if (game.teams.home?.id && game.teams.home.id !== homeTeam.id) {
+    teamIdRemap[game.teams.home.id] = homeTeam.id;
+  }
+  if (game.teams.away?.id && game.teams.away.id !== awayTeam.id) {
+    teamIdRemap[game.teams.away.id] = awayTeam.id;
+  }
+
   const matchRow = {
     home_team_id: homeTeam.id,
     away_team_id: awayTeam.id,
@@ -218,7 +228,7 @@ export async function saveMatchToSupabase(game) {
     }
   }
 
-  return match;
+  return { ...match, _teamIdRemap: teamIdRemap };
 }
 
 export async function fetchMatches() {
@@ -304,19 +314,44 @@ export async function deleteMatchRemote(matchId) {
 
 // ─── HELPERS ─────────────────────────────────────────
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUuid = (s) => typeof s === 'string' && UUID_RE.test(s);
+
 async function findOrCreateTeam(team) {
-  // Post-institution migration: every real team has an id. Resolve by id only.
-  // The legacy name-based fallback was removed when the `name` column was dropped.
-  if (!team?.id) {
-    console.error('findOrCreateTeam called without team.id', team);
+  // Resolves a team — possibly local-only — to its cloud counterpart.
+  // If team.id is a UUID we look it up directly. If it's a local timestamp
+  // (legacy from saveTeam optimistic insert) we fall back to a natural-key
+  // lookup, and create the team in the cloud if it isn't there yet. This
+  // self-heals matches recorded against a team whose initial cloud sync failed.
+  if (!team) {
+    console.error('findOrCreateTeam: no team provided');
     return null;
   }
-  const { data: byId } = await supabase
-    .from('teams')
-    .select(TEAM_SELECT)
-    .eq('id', team.id)
-    .single();
-  return byId || null;
+
+  if (isUuid(team.id)) {
+    const { data: byId } = await supabase
+      .from('teams').select(TEAM_SELECT).eq('id', team.id).single();
+    if (byId) return byId;
+  }
+
+  if (!isUuid(team.institution_id)) {
+    console.error('findOrCreateTeam: cannot resolve local-only team — no valid institution_id', team);
+    return null;
+  }
+
+  const sport = team.sport || 'Hockey';
+  const age_group = team.age_group || '1st';
+  let q = supabase.from('teams').select(TEAM_SELECT)
+    .eq('institution_id', team.institution_id)
+    .eq('sport', sport)
+    .eq('age_group', age_group);
+  q = team.gender ? q.eq('gender', team.gender) : q.is('gender', null);
+  q = team.variant ? q.eq('variant', team.variant) : q.is('variant', null);
+  const { data: matches } = await q;
+  if (matches && matches.length > 0) return matches[0];
+
+  // Not in cloud — create it (clear the local-only id so upsertTeam INSERTs).
+  return await upsertTeam({ ...team, id: null, supabase_id: null });
 }
 
 // ─── LIVE MATCH (for future real-time) ───────────────
